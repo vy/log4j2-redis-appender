@@ -67,6 +67,18 @@ include separately.
 This might come handy if you want to use this plugin along with already
 compiled applications, e.g., Elasticsearch 5.x, which requires Log4j 2.x.
 
+F.A.Q.
+======
+
+- **How can I connect to multiple Redis servers for failover?** You can define
+  multiple Redis appenders nested under a
+  [FailoverAppender](https://logging.apache.org/log4j/2.x/manual/appenders.html#FailoverAppender).
+  (Don't forget to turn off `ignoreExceptions` flag.)
+
+- **How can I handle bursts?** See [BurstFilter](https://logging.apache.org/log4j/2.x/manual/filters.html#BurstFilter).
+
+- **How can I buffer writes to Redis?** See [AsyncAppender](https://logging.apache.org/log4j/2.x/manual/appenders.html#AsyncAppender).
+
 # License
 
 Copyright &copy; 2017 [Volkan Yazıcı](http://vlkan.com/)
