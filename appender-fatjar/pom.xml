@@ -8,7 +8,7 @@
     <parent>
         <artifactId>log4j2-redis-appender-parent</artifactId>
         <groupId>com.vlkan.log4j2</groupId>
-        <version>1.0-SNAPSHOT</version>
+        <version>0.1-SNAPSHOT</version>
     </parent>
 
     <name>Log4j 2 Redis Appender (Fat JAR)</name>
