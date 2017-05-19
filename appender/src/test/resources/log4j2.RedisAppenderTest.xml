@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration name="RedisAppenderTest">
+    <Appenders>
+        <RedisAppender name="REDIS" key="log4j2-messages" host="localhost" port="63790" ignoreExceptions="false">
+            <PatternLayout pattern="%level %msg"/>
+        </RedisAppender>
+    </Appenders>
+    <Loggers>
+        <Root level="all">
+            <AppenderRef ref="REDIS"/>
+        </Root>
+    </Loggers>
+</Configuration>
