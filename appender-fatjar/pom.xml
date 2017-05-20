@@ -6,7 +6,7 @@
     <parent>
         <artifactId>log4j2-redis-appender-parent</artifactId>
         <groupId>com.vlkan.log4j2</groupId>
-        <version>0.2</version>
+        <version>0.3-SNAPSHOT</version>
     </parent>
 
     <name>Log4j 2 Redis Appender (Fat JAR)</name>
