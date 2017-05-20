@@ -2,7 +2,8 @@
 [![Maven Central](https://img.shields.io/maven-central/v/com.vlkan.log4j2/log4j2-redis-appender-parent.svg)](https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.vlkan.log4j2%22)
 
 `RedisAppender` plugin provides a [Log4j 2.x](https://logging.apache.org/log4j/2.x/)
-appender for [Redis](https://redis.io/) in-memory data structure store.
+appender for [Redis](https://redis.io/) in-memory data structure store. The plugin
+uses [Jedis](https://github.com/xetorthio/jedis) as a client for Redis.
 
 # Usage
 
@@ -32,8 +33,15 @@ Below you can find a sample `log4j2.xml` snippet employing `RedisAppender`.
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration name="RedisAppenderTest">
     <Appenders>
-        <RedisAppender name="REDIS" key="log4j2-messages" host="localhost" port="6379">
+        <RedisAppender name="REDIS"
+                       key="log4j2-messages"
+                       host="localhost"
+                       port="6379">
             <PatternLayout pattern="%level %msg"/>
+            <RedisConnectionPoolConfig testWhileIdle="true"
+                                       minEvictableIdleTimeMillis="60000"
+                                       timeBetweenEvictionRunsMillis="30000"
+                                       numTestsPerEvictionRun="-1"/>
         </RedisAppender>
     </Appenders>
     <Loggers>
@@ -46,15 +54,45 @@ Below you can find a sample `log4j2.xml` snippet employing `RedisAppender`.
 
 `RedisAppender` is configured with the following parameters:
 
-| Parameter Name | Type | Description |
+| Parameter Name | Type | Default | Description |
+|----------------|------|---------|-------------|
+| `charset` | String | `UTF-8` | output charset |
+| `key` | String | | Redis queue key |
+| `host` | String | `localhost` | Redis host|
+| `port` | int | 6379 | Redis port |
+| `connectionTimeoutSeconds` | int | 2 | initial connection timeout in seconds |
+| `socketTimeoutSeconds` | int | 2 | socket timeout in seconds |
+| `ignoreExceptions` | boolean | true | Enabling causes exceptions encountered while appending events to be internally logged and then ignored. When set to false, exceptions will be propagated to the caller, instead. You must set this to false when wrapping this appender in a `FailoverAppender`. |
+| `Layout` | Layout | `PatternLayout` | used to format the `LogEvent`s |
+| `RedisConnectionPoolConfig` | RedisConnectionPoolConfig | | Redis connection pool configuration |
+| `debugEnabled` | boolean | false | enables logging to `stderr` for debugging the plugin |
+
+`RedisConnectionPoolConfig` is a wrapper for `JedisPoolConfig` which extends
+[GenericObjectPoolConfig](https://commons.apache.org/proper/commons-pool/apidocs/org/apache/commons/pool2/impl/GenericObjectPoolConfig.html)
+of [Apache Commons Pool](https://commons.apache.org/proper/commons-pool/).
+Below is a complete list of available `RedisConnectionPoolConfig` attributes.
+
+| Parameter Name | Type | Default |
 |----------------|------|-------------|
-| `charset` | String | output charset (defaults to `UTF-8`) |
-| `key` | String | Redis queue key |
-| `host` | String | Redis host (defaults to `localhost`) |
-| `port` | int | Redis port (defaults to 6379) |
-| `connectionTimeoutSeconds` | int | initial connection timeout in seconds (defaults to 2) |
-| `socketTimeoutSeconds` | int | socket timeout in seconds (defaults to 2) |
-| `ignoreExceptions` | boolean | The default is true, causing exceptions encountered while appending events to be internally logged and then ignored. When set to false exceptions will be propagated to the caller, instead. You must set this to false when wrapping this appender in a `FailoverAppender`. |
+| `maxTotal` | int | 8 |
+| `maxIdle` | int | 8 |
+| `minIdle` | int | 0 |
+| `lifo` | boolean | `true` |
+| `fairness` | boolean | `false` |
+| `maxWaitMillis` | long | -1 |
+| `minEvictableIdleTimeMillis` | long | 1000 * 60 |
+| `softMinEvictableIdleTimeMillis` | long | -1 |
+| `numTestsPerEvictionRun` | int | -1 |
+| `testOnCreate` | boolean | `false` |
+| `testOnBorrow` | boolean | `false` |
+| `testOnReturn` | boolean | `false` |
+| `testWhileIdle` | boolean | `true` |
+| `timeBetweenEvictionRunsMillis` | long | 1000 * 30 |
+| `evictionPolicyClassName` | String | `BaseObjectPoolConfig.DEFAULT_EVICTION_POLICY_CLASS_NAME` |
+| `blockWhenExhausted` | boolean | `true` |
+| `jmxEnabled` | boolean | `true` |
+| `jmxNameBase` | String | `null` |
+| `jmxNamePrefix` | String | `com.vlkan.log4j2.redis.appender.JedisConnectionPool` |
 
 Fat JAR
 =======

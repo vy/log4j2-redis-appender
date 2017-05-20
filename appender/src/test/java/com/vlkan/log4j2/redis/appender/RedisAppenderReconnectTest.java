@@ -17,6 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class RedisAppenderReconnectTest {
 
+    private static final DebugLogger LOGGER = new DebugLogger(RedisAppenderReconnectTest.class);
+
     private static final RedisServerResource REDIS_SERVER_RESOURCE = new RedisServerResource(REDIS_PORT);
 
     private static final LoggerContextResource LOGGER_CONTEXT_RESOURCE = new LoggerContextResource(CONFIG_FILE_URI);
@@ -32,18 +34,27 @@ public class RedisAppenderReconnectTest {
         RedisServer redisServer = REDIS_SERVER_RESOURCE.getRedisServer();
         try {
             Logger logger = loggerContext.getLogger(RedisAppenderReconnectTest.class.getCanonicalName());
-            logger.info("append should succeed");
+            append(logger, "append should succeed");
+            LOGGER.debug("stopping server");
             redisServer.stop();
             try {
-                logger.info("append should fail");
+                append(logger, "append should fail");
+                throw new IllegalStateException("should not have reached here");
             } catch (Throwable error) {
                 assertThat(error.getCause()).isInstanceOf(JedisConnectionException.class);
+                LOGGER.debug("starting server");
                 redisServer.start();
-                logger.info("append should succeed again");
+                append(logger, "append should succeed again");
             }
         } finally {
+            LOGGER.debug("finally stopping server");
             redisServer.stop();
         }
+    }
+
+    private static void append(Logger logger, String message) {
+        LOGGER.debug("trying to append: %s", message);
+        logger.info(message);
     }
 
 }

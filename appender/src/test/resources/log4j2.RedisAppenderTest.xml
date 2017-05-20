@@ -1,8 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration name="RedisAppenderTest">
     <Appenders>
-        <RedisAppender name="REDIS" key="log4j2-messages" host="localhost" port="63790" ignoreExceptions="false">
+        <RedisAppender name="REDIS"
+                       key="log4j2-messages"
+                       host="localhost"
+                       port="63790"
+                       ignoreExceptions="false"
+                       debugEnabled="true">
             <PatternLayout pattern="%level %msg"/>
+            <RedisConnectionPoolConfig testWhileIdle="true"
+                                       minEvictableIdleTimeMillis="60000"
+                                       timeBetweenEvictionRunsMillis="30000"
+                                       numTestsPerEvictionRun="-1"/>
         </RedisAppender>
     </Appenders>
     <Loggers>
