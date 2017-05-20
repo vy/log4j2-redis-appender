@@ -1,9 +1,8 @@
 package com.vlkan.log4j2.redis.appender;
 
 import org.junit.rules.ExternalResource;
+import redis.embedded.RedisExecProvider;
 import redis.embedded.RedisServer;
-
-import java.io.IOException;
 
 public class RedisServerResource extends ExternalResource {
 
@@ -11,11 +10,17 @@ public class RedisServerResource extends ExternalResource {
 
     private final RedisServer redisServer;
 
-    public RedisServerResource(int port) {
+    public RedisServerResource(int port, String password) {
         this.port = port;
         try {
-            this.redisServer = new RedisServer(port);
-        } catch (IOException error) {
+            RedisExecProvider redisExecProvider = RedisExecProvider.defaultProvider();
+            this.redisServer = RedisServer
+                    .builder()
+                    .redisExecProvider(redisExecProvider)
+                    .port(port)
+                    .setting("requirepass " + password)
+                    .build();
+        } catch (Throwable error) {
             String message = String.format("failed creating Redis server (port=%d)", port);
             throw new RuntimeException(message, error);
         }

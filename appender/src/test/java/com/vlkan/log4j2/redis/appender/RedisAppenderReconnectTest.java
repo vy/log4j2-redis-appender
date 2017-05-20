@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 
 import static com.vlkan.log4j2.redis.appender.RedisAppenderTest.CONFIG_FILE_URI;
+import static com.vlkan.log4j2.redis.appender.RedisAppenderTest.REDIS_PASSWORD;
 import static com.vlkan.log4j2.redis.appender.RedisAppenderTest.REDIS_PORT;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,7 +20,7 @@ public class RedisAppenderReconnectTest {
 
     private static final DebugLogger LOGGER = new DebugLogger(RedisAppenderReconnectTest.class);
 
-    private static final RedisServerResource REDIS_SERVER_RESOURCE = new RedisServerResource(REDIS_PORT);
+    private static final RedisServerResource REDIS_SERVER_RESOURCE = new RedisServerResource(REDIS_PORT, REDIS_PASSWORD);
 
     private static final LoggerContextResource LOGGER_CONTEXT_RESOURCE = new LoggerContextResource(CONFIG_FILE_URI);
 

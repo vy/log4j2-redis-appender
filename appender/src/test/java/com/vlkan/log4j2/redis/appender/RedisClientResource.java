@@ -9,17 +9,21 @@ public class RedisClientResource extends ExternalResource {
 
     private final int port;
 
+    private final String password;
+
     private final Jedis client;
 
-    public RedisClientResource(String host, int port) {
+    public RedisClientResource(String host, int port, String password) {
         this.host = host;
         this.port = port;
+        this.password = password;
         this.client = new Jedis(host, port);
     }
 
     @Override
     protected void before() throws Throwable {
         client.connect();
+        client.auth(password);
     }
 
     @Override

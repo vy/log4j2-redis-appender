@@ -35,6 +35,8 @@ public class RedisAppender implements Appender {
 
     private final int port;
 
+    private final String password;
+
     private final int connectionTimeoutSeconds;
 
     private final int socketTimeoutSeconds;
@@ -60,6 +62,7 @@ public class RedisAppender implements Appender {
         this.keyBytes = builder.key.getBytes(builder.charset);
         this.host = builder.host;
         this.port = builder.port;
+        this.password = builder.password;
         this.connectionTimeoutSeconds = builder.connectionTimeoutSeconds;
         this.socketTimeoutSeconds = builder.socketTimeoutSeconds;
         this.ignoreExceptions = builder.ignoreExceptions;
@@ -197,7 +200,7 @@ public class RedisAppender implements Appender {
                 port,
                 connectionTimeoutMillis,
                 socketTimeoutMillis,
-                null,       // password
+                password,
                 0,          // database
                 null,       // clientName
                 false,      // ssl
@@ -263,11 +266,12 @@ public class RedisAppender implements Appender {
         private String key;
 
         @PluginBuilderAttribute
-        @Required(message = "missing host")
         private String host = "localhost";
 
         @PluginBuilderAttribute
-        @Required(message = "missing port")
+        private String password = null;
+
+        @PluginBuilderAttribute
         private int port = 6379;
 
         @PluginBuilderAttribute
@@ -283,7 +287,7 @@ public class RedisAppender implements Appender {
         private boolean debugEnabled = false;
 
         @PluginElement("RedisConnectionPoolConfig")
-        private RedisConnectionPoolConfig poolConfig;// = RedisConnectionPoolConfig.newBuilder().build();
+        private RedisConnectionPoolConfig poolConfig = RedisConnectionPoolConfig.newBuilder().build();
 
         private Builder() {
             // Do nothing.
@@ -340,6 +344,15 @@ public class RedisAppender implements Appender {
 
         public Builder setPort(int port) {
             this.port = port;
+            return this;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public Builder setPassword(String password) {
+            this.password = password;
             return this;
         }
 

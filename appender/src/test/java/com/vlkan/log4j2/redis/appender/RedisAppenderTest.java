@@ -27,11 +27,13 @@ public class RedisAppenderTest {
 
     public static final String REDIS_HOST = "localhost";
 
+    public static final String REDIS_PASSWORD = "toosecret";
+
     public static final int REDIS_PORT = 63790;
 
-    private static final RedisServerResource REDIS_SERVER_RESOURCE = new RedisServerResource(REDIS_PORT);
+    private static final RedisServerResource REDIS_SERVER_RESOURCE = new RedisServerResource(REDIS_PORT, REDIS_PASSWORD);
 
-    private static final RedisClientResource REDIS_CLIENT_RESOURCE = new RedisClientResource(REDIS_HOST, REDIS_PORT);
+    private static final RedisClientResource REDIS_CLIENT_RESOURCE = new RedisClientResource(REDIS_HOST, REDIS_PORT, REDIS_PASSWORD);
 
     private static final String CONFIG_FILE_NAME = "log4j2.RedisAppenderTest.xml";
 

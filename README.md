@@ -60,12 +60,13 @@ Below you can find a sample `log4j2.xml` snippet employing `RedisAppender`.
 | `key` | String | | Redis queue key |
 | `host` | String | `localhost` | Redis host|
 | `port` | int | 6379 | Redis port |
+| `password` | String | `null` | Redis password |
 | `connectionTimeoutSeconds` | int | 2 | initial connection timeout in seconds |
 | `socketTimeoutSeconds` | int | 2 | socket timeout in seconds |
-| `ignoreExceptions` | boolean | true | Enabling causes exceptions encountered while appending events to be internally logged and then ignored. When set to false, exceptions will be propagated to the caller, instead. You must set this to false when wrapping this appender in a `FailoverAppender`. |
+| `ignoreExceptions` | boolean | `true` | Enabling causes exceptions encountered while appending events to be internally logged and then ignored. When set to false, exceptions will be propagated to the caller, instead. You must set this to false when wrapping this appender in a `FailoverAppender`. |
 | `Layout` | Layout | `PatternLayout` | used to format the `LogEvent`s |
 | `RedisConnectionPoolConfig` | RedisConnectionPoolConfig | | Redis connection pool configuration |
-| `debugEnabled` | boolean | false | enables logging to `stderr` for debugging the plugin |
+| `debugEnabled` | boolean | `false` | enables logging to `stderr` for debugging the plugin |
 
 `RedisConnectionPoolConfig` is a wrapper for `JedisPoolConfig` which extends
 [GenericObjectPoolConfig](https://commons.apache.org/proper/commons-pool/apidocs/org/apache/commons/pool2/impl/GenericObjectPoolConfig.html)
@@ -88,7 +89,7 @@ Below is a complete list of available `RedisConnectionPoolConfig` attributes.
 | `testOnReturn` | boolean | `false` |
 | `testWhileIdle` | boolean | `true` |
 | `timeBetweenEvictionRunsMillis` | long | 1000 * 30 |
-| `evictionPolicyClassName` | String | `BaseObjectPoolConfig.DEFAULT_EVICTION_POLICY_CLASS_NAME` |
+| `evictionPolicyClassName` | String | `org.apache.commons.pool2.impl.DefaultEvictionPolicy` |
 | `blockWhenExhausted` | boolean | `true` |
 | `jmxEnabled` | boolean | `true` |
 | `jmxNameBase` | String | `null` |
