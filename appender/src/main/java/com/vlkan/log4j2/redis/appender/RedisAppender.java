@@ -17,11 +17,14 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 
+import static com.vlkan.log4j2.redis.appender.Helpers.requireArgument;
+import static java.util.Objects.requireNonNull;
+
 @Plugin(name = "RedisAppender",
         category = Core.CATEGORY_NAME,
         elementType = Appender.ELEMENT_TYPE,
         printObject = true)
-public class RedisAppender implements Appender {
+public class RedisAppender implements Appender, RedisThrottlerReceiver {
 
     private final String name;
 
@@ -49,6 +52,8 @@ public class RedisAppender implements Appender {
 
     private final DebugLogger logger;
 
+    private final RedisThrottler throttler;
+
     private volatile JedisPool jedisPool;
 
     private volatile State state;
@@ -69,6 +74,7 @@ public class RedisAppender implements Appender {
         this.debugEnabled = builder.debugEnabled;
         this.poolConfig = builder.poolConfig;
         this.logger = new DebugLogger(RedisAppender.class, debugEnabled);
+        this.throttler = new RedisThrottler(builder.getThrottlerConfig(), this, ignoreExceptions, debugEnabled);
     }
 
     @Override
@@ -102,25 +108,29 @@ public class RedisAppender implements Appender {
     }
 
     @Override
+    public void consumeThrottledEvent(byte[] event) {
+        if (logger.isEnabled()) {
+            logger.debug("consuming single event: %s", new String(event));
+        }
+        try (Jedis jedis = jedisPool.getResource()) {
+            jedis.rpush(keyBytes, event);
+        }
+    }
+
+    @Override
+    public void consumeThrottledEvents(byte[]... events) {
+        logger.debug("consuming %d events", events.length);
+        try (Jedis jedis = jedisPool.getResource()) {
+            jedis.rpush(keyBytes, events);
+        }
+    }
+
+    @Override
     public void append(LogEvent event) {
         logger.debug("appending: %s", event.getMessage().getFormattedMessage());
         if (State.STARTED.equals(state)) {
             byte[] eventBytes = layout.toByteArray(event);
-            try (Jedis jedis = jedisPool.getResource()) {
-                jedis.rpush(keyBytes, eventBytes);
-                logger.debug("append succeeded");
-            } catch (JedisConnectionException error) {
-
-                if (debugEnabled) {
-                    logger.debug("connection failure: %s", error.getMessage());
-                    error.printStackTrace();
-                }
-
-                if (!ignoreExceptions) {
-                    throw error;
-                }
-
-            }
+            throttler.push(eventBytes);
         }
     }
 
@@ -129,7 +139,7 @@ public class RedisAppender implements Appender {
         changeState(null, State.INITIALIZING, State.INITIALIZED, new Runnable() {
             @Override
             public void run() {
-                // Do nothing.
+                throttler.start();
             }
         });
     }
@@ -184,6 +194,7 @@ public class RedisAppender implements Appender {
     public synchronized void stop() {
         logger.debug("stopping");
         state = State.STOPPING;
+        throttler.close();
         if (jedisPool != null && !jedisPool.isClosed()) {
             disconnect();
         }
@@ -288,6 +299,9 @@ public class RedisAppender implements Appender {
 
         @PluginElement("RedisConnectionPoolConfig")
         private RedisConnectionPoolConfig poolConfig = RedisConnectionPoolConfig.newBuilder().build();
+
+        @PluginElement("RedisThrottlerConfig")
+        private RedisThrottlerConfig throttlerConfig = RedisThrottlerConfig.newBuilder().build();
 
         private Builder() {
             // Do nothing.
@@ -401,6 +415,15 @@ public class RedisAppender implements Appender {
             return this;
         }
 
+        public RedisThrottlerConfig getThrottlerConfig() {
+            return throttlerConfig;
+        }
+
+        public Builder setThrottlerConfig(RedisThrottlerConfig throttlerConfig) {
+            this.throttlerConfig = throttlerConfig;
+            return this;
+        }
+
         @Override
         public RedisAppender build() {
             check();
@@ -408,28 +431,16 @@ public class RedisAppender implements Appender {
         }
 
         private void check() {
-            checkArgument(Strings.isNotBlank(name), "blank name");
-            checkNotNull(charset, "charset");
-            checkNotNull(layout, "layout");
-            checkArgument(Strings.isNotBlank(key), "blank key");
-            checkArgument(Strings.isNotBlank(host), "blank host");
-            checkArgument(port > 0, "expecting: port > 0, found: %d", port);
-            checkArgument(connectionTimeoutSeconds > 0, "expecting: connectionTimeoutSeconds > 0, found: %d", connectionTimeoutSeconds);
-            checkArgument(socketTimeoutSeconds > 0, "expecting: socketTimeoutSeconds > 0, found: %d", socketTimeoutSeconds);
-            checkNotNull(poolConfig, "poolConfig");
-        }
-
-        private static void checkNotNull(Object instance, String name) {
-            if (instance == null) {
-                throw new NullPointerException(name);
-            }
-        }
-
-        private static void checkArgument(boolean condition, String messageFormat, Object... messageArguments) {
-            if (!condition) {
-                String message = String.format(messageFormat, messageArguments);
-                throw new IllegalArgumentException(message);
-            }
+            requireArgument(Strings.isNotBlank(name), "blank name");
+            requireNonNull(charset, "charset");
+            requireNonNull(layout, "layout");
+            requireArgument(Strings.isNotBlank(key), "blank key");
+            requireArgument(Strings.isNotBlank(host), "blank host");
+            requireArgument(port > 0, "expecting: port > 0, found: %d", port);
+            requireArgument(connectionTimeoutSeconds > 0, "expecting: connectionTimeoutSeconds > 0, found: %d", connectionTimeoutSeconds);
+            requireArgument(socketTimeoutSeconds > 0, "expecting: socketTimeoutSeconds > 0, found: %d", socketTimeoutSeconds);
+            requireNonNull(poolConfig, "poolConfig");
+            requireNonNull(throttlerConfig, "throttlerConfig");
         }
 
         @Override

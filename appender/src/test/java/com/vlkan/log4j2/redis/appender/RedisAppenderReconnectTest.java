@@ -2,18 +2,16 @@ package com.vlkan.log4j2.redis.appender;
 
 import org.apache.logging.log4j.core.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.AppenderLoggingException;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
-import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.embedded.RedisServer;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-import static com.vlkan.log4j2.redis.appender.RedisAppenderTest.CONFIG_FILE_URI;
-import static com.vlkan.log4j2.redis.appender.RedisAppenderTest.REDIS_PASSWORD;
-import static com.vlkan.log4j2.redis.appender.RedisAppenderTest.REDIS_PORT;
+import static com.vlkan.log4j2.redis.appender.RedisAppenderTest.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class RedisAppenderReconnectTest {
@@ -36,13 +34,18 @@ public class RedisAppenderReconnectTest {
         try {
             Logger logger = loggerContext.getLogger(RedisAppenderReconnectTest.class.getCanonicalName());
             append(logger, "append should succeed");
+            Thread.sleep(2_000);
             LOGGER.debug("stopping server");
             redisServer.stop();
             try {
-                append(logger, "append should fail");
+                append(logger, "append should fail silently");
+                Thread.sleep(2_000);
+                append(logger, "append should fail loudly");
                 throw new IllegalStateException("should not have reached here");
             } catch (Throwable error) {
-                assertThat(error.getCause()).isInstanceOf(JedisConnectionException.class);
+                assertThat(error).isInstanceOf(AppenderLoggingException.class);
+                assertThat(error.getCause()).isNotNull();
+                assertThat(error.getCause()).hasMessageContaining("Unexpected end of stream.");
                 LOGGER.debug("starting server");
                 redisServer.start();
                 append(logger, "append should succeed again");

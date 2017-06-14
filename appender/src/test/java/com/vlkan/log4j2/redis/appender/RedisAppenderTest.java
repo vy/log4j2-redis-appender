@@ -17,6 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class RedisAppenderTest {
 
+    private static final DebugLogger LOGGER = new DebugLogger(RedisAppenderTest.class, true);
+
     private static final Random RANDOM = new Random(0);
 
     private static final int MIN_MESSAGE_COUNT = 1;
@@ -102,13 +104,22 @@ public class RedisAppenderTest {
     }
 
     @Test
-    public void test_messages_are_enqueued_to_redis() throws IOException {
+    public void test_messages_are_enqueued_to_redis() throws IOException, InterruptedException {
+
+        LOGGER.debug("creating the logger");
         Logger logger = LOGGER_CONTEXT_RESOURCE.getLoggerContext().getLogger(RedisAppenderTest.class.getCanonicalName());
+
         int expectedMessageCount = MIN_MESSAGE_COUNT + RANDOM.nextInt(MAX_MESSAGE_COUNT - MIN_MESSAGE_COUNT);
+        LOGGER.debug("logging %d messages", expectedMessageCount);
         LogMessage[] expectedLogMessages = LogMessage.createRandomArray(expectedMessageCount);
         for (LogMessage expectedLogMessage : expectedLogMessages) {
             logger.log(expectedLogMessage.level, expectedLogMessage.message);
         }
+
+        LOGGER.debug("waiting for throttler to kick in");
+        Thread.sleep(1_000);
+
+        LOGGER.debug("checking logged messages");
         Jedis redisClient = REDIS_CLIENT_RESOURCE.getClient();
         for (int messageIndex = 0; messageIndex < expectedMessageCount; messageIndex++) {
             LogMessage expectedLogMessage = expectedLogMessages[messageIndex];
@@ -121,6 +132,7 @@ public class RedisAppenderTest {
                 throw new RuntimeException(message, comparisonFailure);
             }
         }
+
     }
 
 }

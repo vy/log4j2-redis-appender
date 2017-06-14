@@ -42,6 +42,10 @@ Below you can find a sample `log4j2.xml` snippet employing `RedisAppender`.
                                        minEvictableIdleTimeMillis="60000"
                                        timeBetweenEvictionRunsMillis="30000"
                                        numTestsPerEvictionRun="-1"/>
+            <RedisThrottlerConfig bufferSize="500"
+                                  batchSize="100"
+                                  flushPeriodMillis="1000"
+                                  maxEventCountPerSecond="100"/>
         </RedisAppender>
     </Appenders>
     <Loggers>
@@ -66,7 +70,10 @@ Below you can find a sample `log4j2.xml` snippet employing `RedisAppender`.
 | `ignoreExceptions` | boolean | `true` | Enabling causes exceptions encountered while appending events to be internally logged and then ignored. When set to false, exceptions will be propagated to the caller, instead. You must set this to false when wrapping this appender in a `FailoverAppender`. |
 | `Layout` | Layout | `PatternLayout` | used to format the `LogEvent`s |
 | `RedisConnectionPoolConfig` | RedisConnectionPoolConfig | | Redis connection pool configuration |
+| `RedisThrottlerConfig` | RedisThrottlerConfig | | Redis throttler configuration |
 | `debugEnabled` | boolean | `false` | enables logging to `stderr` for debugging the plugin |
+
+## Redis Connection Pool
 
 `RedisConnectionPoolConfig` is a wrapper for `JedisPoolConfig` which extends
 [GenericObjectPoolConfig](https://commons.apache.org/proper/commons-pool/apidocs/org/apache/commons/pool2/impl/GenericObjectPoolConfig.html)
@@ -95,6 +102,29 @@ Below is a complete list of available `RedisConnectionPoolConfig` attributes.
 | `jmxNameBase` | String | `null` |
 | `jmxNamePrefix` | String | `com.vlkan.log4j2.redis.appender.JedisConnectionPool` |
 
+## Redis Throttler
+
+While Log4j 2 provides utilities like
+[BurstFilter](https://logging.apache.org/log4j/2.x/manual/filters.html#BurstFilter)
+and [AsyncAppender](https://logging.apache.org/log4j/2.x/manual/appenders.html#AsyncAppender)
+that you can wrap around any appender to facilitate throttling,
+[the appender API](https://logging.apache.org/log4j/2.0/log4j-core/apidocs/org/apache/logging/log4j/core/Appender.html)
+[falls short of communicating this intent](http://mail-archives.apache.org/mod_mbox/logging-dev/201706.mbox/browser).
+Hence, `RedisAppender` provides its own throttling mechanics to exploit batch
+pushes available in [Redis RPUSH](https://redis.io/commands/rpush). This
+feature is configured by `RedisThrottlerConfig` element using the following
+attributes:
+
+| Parameter Name | Type | Default | Description |
+|----------------|------|---------|-------------|
+| `bufferSize` | int | 500 | `LogEvent` buffer size |
+| `batchSize` | int | 100 | size of batches fed into Redis `RPUSH` |
+| `flushPeriodMillis` | long | 1000 | buffer flush period |
+| `maxEventCountPerSecond` | int | 0 | allowed maximum number of `LogEvent`s per second (0 stands for unlimited) |
+
+The buffer is flushed if either there are more than `batchSize` events
+queued in the buffer or the last flush was older than `flushPeriodMillis`.
+
 Fat JAR
 =======
 
@@ -113,10 +143,6 @@ F.A.Q.
   multiple Redis appenders nested under a
   [FailoverAppender](https://logging.apache.org/log4j/2.x/manual/appenders.html#FailoverAppender).
   (Don't forget to turn off `ignoreExceptions` flag.)
-
-- **How can I handle bursts?** See [BurstFilter](https://logging.apache.org/log4j/2.x/manual/filters.html#BurstFilter).
-
-- **How can I buffer writes to Redis?** See [AsyncAppender](https://logging.apache.org/log4j/2.x/manual/appenders.html#AsyncAppender).
 
 # License
 

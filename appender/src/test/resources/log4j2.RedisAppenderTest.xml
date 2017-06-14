@@ -6,12 +6,17 @@
                        host="localhost"
                        password="toosecret"
                        port="63790"
-                       ignoreExceptions="false">
+                       ignoreExceptions="false"
+                       debugEnabled="false">
             <PatternLayout pattern="%level %msg"/>
             <RedisConnectionPoolConfig testWhileIdle="true"
                                        minEvictableIdleTimeMillis="60000"
                                        timeBetweenEvictionRunsMillis="30000"
                                        numTestsPerEvictionRun="-1"/>
+            <RedisThrottlerConfig bufferSize="100"
+                                  batchSize="10"
+                                  flushPeriodMillis="500"
+                                  maxEventCountPerSecond="0"/>
         </RedisAppender>
     </Appenders>
     <Loggers>
