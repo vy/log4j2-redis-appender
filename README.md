@@ -144,6 +144,37 @@ F.A.Q.
   [FailoverAppender](https://logging.apache.org/log4j/2.x/manual/appenders.html#FailoverAppender).
   (Don't forget to turn off `ignoreExceptions` flag.)
 
+- **How can I avoid getting `AccessControlException` exceptions?** If you are
+  using the plugin in a security manager enabled Java application (for
+  instance, which is the case for Elasticsearch since version 2.3), you
+  might be getting `AccessControlException` exceptions as follows:
+
+  ```
+  [2017-06-23T11:25:35,644][WARN ][o.e.b.ElasticsearchUncaughtExceptionHandler] [tst-store-001.data] uncaught exception in thread [commons-pool-EvictionTimer]
+  java.security.AccessControlException: access denied ("java.lang.RuntimePermission" "setContextClassLoader")
+          at java.security.AccessControlContext.checkPermission(AccessControlContext.java:472) ~[?:1.8.0_131]
+          at java.security.AccessController.checkPermission(AccessController.java:884) ~[?:1.8.0_131]
+          at java.lang.SecurityManager.checkPermission(SecurityManager.java:549) ~[?:1.8.0_131]
+          at java.lang.Thread.setContextClassLoader(Thread.java:1474) [?:1.8.0_131]
+          at org.apache.commons.pool2.impl.BaseGenericObjectPool$Evictor.run(BaseGenericObjectPool.java:1052) ~[log4j2-redis-appender.jar:?]
+          at java.util.TimerThread.mainLoop(Timer.java:555) ~[?:1.8.0_131]
+          at java.util.TimerThread.run(Timer.java:505) ~[?:1.8.0_131]
+  ```
+
+  To alleviate this, you need to grant necessary permissions using a
+  [policy file](http://docs.oracle.com/javase/8/docs/technotes/guides/security/PolicyFiles.html):
+
+  ```
+  grant {
+      permission java.lang.RuntimePermission "setContextClassLoader";
+  };
+  ```
+
+  Then you can activate this policy for your application via either placing it
+  under one of [default policy file locations](http://docs.oracle.com/javase/8/docs/technotes/guides/security/PolicyFiles.html#DefaultLocs)
+  (e.g., `$JAVA_HOME/lib/security/java.policy`) or providing it as an argument
+  at runtime, that is, `-Djava.security.policy=someURL`.
+
 # License
 
 Copyright &copy; 2017 [Volkan Yazıcı](http://vlkan.com/)
