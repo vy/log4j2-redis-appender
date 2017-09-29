@@ -2,6 +2,7 @@ package com.vlkan.log4j2.redis.appender;
 
 import com.google.common.util.concurrent.RateLimiter;
 
+import java.util.Arrays;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -65,7 +66,13 @@ class RedisThrottler implements AutoCloseable {
 
         // Flush in batches.
         logger.debug("polling");
-        while ((event = buffer.poll(config.getFlushPeriodMillis(), TimeUnit.MILLISECONDS)) != null) {
+        long waitPeriodMillis = config.getFlushPeriodMillis();
+        while (waitPeriodMillis > 0) {
+            long pollTimeMillis = System.currentTimeMillis();
+            event = buffer.poll(waitPeriodMillis, TimeUnit.MILLISECONDS);
+            if (event == null) {
+                break;
+            }
             if (logger.isEnabled()) {
                 logger.debug("polled: %s", new String(event));
             }
@@ -74,34 +81,17 @@ class RedisThrottler implements AutoCloseable {
                 safeConsumeEvents(batch);
                 batchIndex = 0;
             }
+            long pollPeriodMillis = System.currentTimeMillis() - pollTimeMillis;
+            waitPeriodMillis -= pollPeriodMillis;
         }
 
-        // Flush individually.
+        // Flush the last remaining.
         if (batchIndex > 0) {
-            logger.debug("pushing %d individual events", batchIndex);
-            int eventCount = batchIndex;
-            batchIndex = 0;
-            do {
-                event = this.batch[batchIndex];
-                safeConsumeEvent(event);
-            } while (++batchIndex < eventCount);
+            logger.debug("pushing remaining %d events", batchIndex);
+            byte[][] subBatch = Arrays.copyOfRange(batch, 0, batchIndex);
+            safeConsumeEvents(subBatch);
         }
 
-    }
-
-    private void safeConsumeEvent(byte[] event) {
-        try {
-            if (logger.isEnabled()) {
-                logger.debug("pushing single event: %s", new String(event));
-            }
-            receiver.consumeThrottledEvent(event);
-        } catch (Throwable thrown) {
-            if (logger.isEnabled()) {
-                logger.debug("push failure: %s", thrown.getMessage());
-                thrown.printStackTrace();
-            }
-            lastThrown.set(thrown);
-        }
     }
 
     private void safeConsumeEvents(final byte[]... events) {
