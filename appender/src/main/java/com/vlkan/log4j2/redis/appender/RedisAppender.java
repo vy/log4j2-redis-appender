@@ -108,16 +108,6 @@ public class RedisAppender implements Appender, RedisThrottlerReceiver {
     }
 
     @Override
-    public void consumeThrottledEvent(byte[] event) {
-        if (logger.isEnabled()) {
-            logger.debug("consuming single event: %s", new String(event));
-        }
-        try (Jedis jedis = jedisPool.getResource()) {
-            jedis.rpush(keyBytes, event);
-        }
-    }
-
-    @Override
     public void consumeThrottledEvents(byte[]... events) {
         logger.debug("consuming %d events", events.length);
         try (Jedis jedis = jedisPool.getResource()) {
