@@ -18,13 +18,13 @@ public class RedisThrottlerConfig {
 
     private final long flushPeriodMillis;
 
-    private final int maxEventCountPerSecond;
+    private final double maxByteCountPerSecond;
 
     private RedisThrottlerConfig(Builder builder) {
         this.bufferSize = builder.bufferSize;
         this.batchSize = builder.batchSize;
         this.flushPeriodMillis = builder.flushPeriodMillis;
-        this.maxEventCountPerSecond = builder.maxEventCountPerSecond;
+        this.maxByteCountPerSecond = builder.maxByteCountPerSecond;
     }
 
     public int getBufferSize() {
@@ -39,8 +39,8 @@ public class RedisThrottlerConfig {
         return flushPeriodMillis;
     }
 
-    public int getMaxEventCountPerSecond() {
-        return maxEventCountPerSecond;
+    public double getMaxByteCountPerSecond() {
+        return maxByteCountPerSecond;
     }
 
     @Override
@@ -48,7 +48,7 @@ public class RedisThrottlerConfig {
         return "RedisThrottlerConfig{bufferSize=" + bufferSize +
                 ", batchSize=" + batchSize +
                 ", flushPeriodMillis=" + flushPeriodMillis +
-                ", maxEventCountPerSecond=" + maxEventCountPerSecond +
+                ", maxByteCountPerSecond=" + maxByteCountPerSecond +
                 '}';
     }
 
@@ -69,7 +69,7 @@ public class RedisThrottlerConfig {
         private long flushPeriodMillis = 1000;
 
         @PluginBuilderAttribute
-        private int maxEventCountPerSecond = 0;
+        private double maxByteCountPerSecond = 0;
 
         private Builder() {
             // Do nothing.
@@ -102,12 +102,12 @@ public class RedisThrottlerConfig {
             return this;
         }
 
-        public int getMaxEventCountPerSecond() {
-            return maxEventCountPerSecond;
+        public double getMaxByteCountPerSecond() {
+            return maxByteCountPerSecond;
         }
 
-        public Builder setMaxEventCountPerSecond(int maxEventCountPerSecond) {
-            this.maxEventCountPerSecond = maxEventCountPerSecond;
+        public Builder setMaxByteCountPerSecond(double maxByteCountPerSecond) {
+            this.maxByteCountPerSecond = maxByteCountPerSecond;
             return this;
         }
 
@@ -127,9 +127,9 @@ public class RedisThrottlerConfig {
                     "expecting: flushPeriodMillis > 0, found: %s",
                     flushPeriodMillis);
             requireArgument(
-                    maxEventCountPerSecond >= 0,
-                    "expecting: maxEventCountPerSecond >= 0, found: %d",
-                    maxEventCountPerSecond);
+                    maxByteCountPerSecond >= 0,
+                    "expecting: maxByteCountPerSecond >= 0, found: %d",
+                    maxByteCountPerSecond);
         }
 
         @Override
@@ -137,7 +137,7 @@ public class RedisThrottlerConfig {
             return "Builder{bufferSize=" + bufferSize +
                     ", batchSize=" + batchSize +
                     ", flushPeriodMillis=" + flushPeriodMillis +
-                    ", maxEventCountPerSecond=" + maxEventCountPerSecond +
+                    ", maxByteCountPerSecond=" + maxByteCountPerSecond +
                     '}';
         }
 

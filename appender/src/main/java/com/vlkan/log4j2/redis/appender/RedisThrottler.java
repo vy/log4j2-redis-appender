@@ -35,7 +35,7 @@ class RedisThrottler implements AutoCloseable {
         this.buffer = new ArrayBlockingQueue<>(config.getBufferSize());
         this.batch = new byte[config.getBatchSize()][];
         this.flushTrigger = createFlushTrigger();
-        this.rateLimiter = config.getMaxEventCountPerSecond() > 0 ? RateLimiter.create(config.getMaxEventCountPerSecond()) : null;
+        this.rateLimiter = config.getMaxByteCountPerSecond() > 0 ? RateLimiter.create(config.getMaxByteCountPerSecond()) : null;
         this.logger = new DebugLogger(RedisThrottler.class, debugEnabled);
     }
 
@@ -115,7 +115,7 @@ class RedisThrottler implements AutoCloseable {
             return;
         }
 
-        if (rateLimiter != null && !rateLimiter.tryAcquire()) {
+        if (rateLimiter != null && !rateLimiter.tryAcquire(event.length)) {
             tryThrow("failed acquiring rate limiter token");
             return;
         }
