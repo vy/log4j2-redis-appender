@@ -6,6 +6,7 @@ import org.apache.logging.log4j.core.config.plugins.PluginBuilderAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginBuilderFactory;
 
 import static com.vlkan.log4j2.redis.appender.Helpers.requireArgument;
+import static org.apache.logging.log4j.util.Strings.isBlank;
 
 @Plugin(name = "RedisThrottlerConfig",
         category = Node.CATEGORY,
@@ -20,11 +21,14 @@ public class RedisThrottlerConfig {
 
     private final double maxByteCountPerSecond;
 
+    private final String jmxBeanName;
+
     private RedisThrottlerConfig(Builder builder) {
         this.bufferSize = builder.bufferSize;
         this.batchSize = builder.batchSize;
         this.flushPeriodMillis = builder.flushPeriodMillis;
         this.maxByteCountPerSecond = builder.maxByteCountPerSecond;
+        this.jmxBeanName = isBlank(builder.jmxBeanName) ? null : builder.jmxBeanName;
     }
 
     public int getBufferSize() {
@@ -43,12 +47,17 @@ public class RedisThrottlerConfig {
         return maxByteCountPerSecond;
     }
 
+    public String getJmxBeanName() {
+        return jmxBeanName;
+    }
+
     @Override
     public String toString() {
         return "RedisThrottlerConfig{bufferSize=" + bufferSize +
                 ", batchSize=" + batchSize +
                 ", flushPeriodMillis=" + flushPeriodMillis +
                 ", maxByteCountPerSecond=" + maxByteCountPerSecond +
+                ", jmxBeanName=" + jmxBeanName +
                 '}';
     }
 
@@ -70,6 +79,9 @@ public class RedisThrottlerConfig {
 
         @PluginBuilderAttribute
         private double maxByteCountPerSecond = 0;
+
+        @PluginBuilderAttribute
+        private String jmxBeanName = null;
 
         private Builder() {
             // Do nothing.
@@ -111,6 +123,15 @@ public class RedisThrottlerConfig {
             return this;
         }
 
+        public String getJmxBeanName() {
+            return jmxBeanName;
+        }
+
+        public Builder setJmxBeanName(String jmxBeanName) {
+            this.jmxBeanName = jmxBeanName;
+            return this;
+        }
+
         public RedisThrottlerConfig build() {
             check();
             return new RedisThrottlerConfig(this);
@@ -138,6 +159,7 @@ public class RedisThrottlerConfig {
                     ", batchSize=" + batchSize +
                     ", flushPeriodMillis=" + flushPeriodMillis +
                     ", maxByteCountPerSecond=" + maxByteCountPerSecond +
+                    ", jmxBeanName=" + jmxBeanName +
                     '}';
         }
 

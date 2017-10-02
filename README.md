@@ -115,12 +115,13 @@ pushes available in [Redis RPUSH](https://redis.io/commands/rpush). This
 feature is configured by `RedisThrottlerConfig` element using the following
 attributes:
 
-| Parameter Name | Type | Default | Description |
-|----------------|------|---------|-------------|
-| `bufferSize` | int | 500 | `LogEvent` buffer size |
-| `batchSize` | int | 100 | size of batches fed into Redis `RPUSH` |
-| `flushPeriodMillis` | long | 1000 | buffer flush period |
-| `maxByteCountPerSecond` | double | 0 | allowed maximum number of bytes per second (0 stands for unlimited) |
+| Parameter Name | Type | Description |
+|----------------|------|-------------|
+| `bufferSize` | int | `LogEvent` buffer size (defaults to 500) |
+| `batchSize` | int | size of batches fed into Redis `RPUSH` (defaults to 100) |
+| `flushPeriodMillis` | long | buffer flush period (defaults to 1000) |
+| `maxByteCountPerSecond` | double | allowed maximum number of bytes per second (defaults to 0, that is, unlimited) |
+| `jmxBeanName` | String | `RedisThrottlerJmxBean` name (defaults to `org.apache.logging.log4j2:type=<loggerContextName>,component=Appenders,name=<appenderName>,subtype=RedisThrottler`) |
 
 The buffer is flushed if either there are more than `batchSize` events
 queued in the buffer or the last flush was older than `flushPeriodMillis`.

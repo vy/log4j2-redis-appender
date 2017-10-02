@@ -1,10 +1,16 @@
 package com.vlkan.log4j2.redis.appender;
 
-import org.apache.logging.log4j.core.*;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.Core;
+import org.apache.logging.log4j.core.ErrorHandler;
+import org.apache.logging.log4j.core.Layout;
+import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.appender.DefaultErrorHandler;
+import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.config.plugins.PluginBuilderAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginBuilderFactory;
+import org.apache.logging.log4j.core.config.plugins.PluginConfiguration;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.validation.constraints.Required;
 import org.apache.logging.log4j.core.layout.PatternLayout;
@@ -24,7 +30,9 @@ import static java.util.Objects.requireNonNull;
         category = Core.CATEGORY_NAME,
         elementType = Appender.ELEMENT_TYPE,
         printObject = true)
-public class RedisAppender implements Appender, RedisThrottlerReceiver {
+public class RedisAppender implements Appender {
+
+    private final Configuration config;
 
     private final String name;
 
@@ -61,6 +69,7 @@ public class RedisAppender implements Appender, RedisThrottlerReceiver {
     private volatile ErrorHandler errorHandler = new DefaultErrorHandler(this);
 
     private RedisAppender(Builder builder) {
+        this.config = builder.config;
         this.name = builder.name;
         this.layout = builder.layout;
         this.key = builder.key;
@@ -75,6 +84,10 @@ public class RedisAppender implements Appender, RedisThrottlerReceiver {
         this.poolConfig = builder.poolConfig;
         this.logger = new DebugLogger(RedisAppender.class, debugEnabled);
         this.throttler = new RedisThrottler(builder.getThrottlerConfig(), this, ignoreExceptions, debugEnabled);
+    }
+
+    public Configuration getConfig() {
+        return config;
     }
 
     @Override
@@ -107,8 +120,7 @@ public class RedisAppender implements Appender, RedisThrottlerReceiver {
         return state;
     }
 
-    @Override
-    public void consumeThrottledEvents(byte[]... events) {
+    void consumeThrottledEvents(byte[]... events) {
         logger.debug("consuming %d events", events.length);
         try (Jedis jedis = jedisPool.getResource()) {
             jedis.rpush(keyBytes, events);
@@ -252,6 +264,9 @@ public class RedisAppender implements Appender, RedisThrottlerReceiver {
 
     public static class Builder implements org.apache.logging.log4j.core.util.Builder<RedisAppender> {
 
+        @PluginConfiguration
+        private Configuration config;
+
         @PluginBuilderAttribute
         @Required(message = "missing name")
         private String name;
@@ -295,6 +310,15 @@ public class RedisAppender implements Appender, RedisThrottlerReceiver {
 
         private Builder() {
             // Do nothing.
+        }
+
+        public Configuration getConfig() {
+            return config;
+        }
+
+        public Builder setConfig(Configuration config) {
+            this.config = config;
+            return this;
         }
 
         public String getName() {
@@ -421,6 +445,7 @@ public class RedisAppender implements Appender, RedisThrottlerReceiver {
         }
 
         private void check() {
+            requireNonNull(config, "config");
             requireArgument(Strings.isNotBlank(name), "blank name");
             requireNonNull(charset, "charset");
             requireNonNull(layout, "layout");
