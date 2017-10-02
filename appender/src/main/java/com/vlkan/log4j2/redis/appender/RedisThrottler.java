@@ -28,7 +28,7 @@ class RedisThrottler implements AutoCloseable {
 
     private final AtomicReference<Throwable> lastThrown = new AtomicReference<>(null);
 
-    RedisThrottler(RedisThrottlerConfig config, RedisThrottlerReceiver receiver, boolean ignoreExceptions, boolean debugEnabled) {
+    public RedisThrottler(RedisThrottlerConfig config, RedisThrottlerReceiver receiver, boolean ignoreExceptions, boolean debugEnabled) {
         this.config = config;
         this.receiver = receiver;
         this.ignoreExceptions = ignoreExceptions;
@@ -111,7 +111,7 @@ class RedisThrottler implements AutoCloseable {
 
         Throwable thrown = lastThrown.getAndSet(null);
         if (thrown != null) {
-            tryThrow(thrown.getMessage());
+            tryThrow(thrown);
             return;
         }
 
@@ -124,6 +124,12 @@ class RedisThrottler implements AutoCloseable {
             tryThrow("failed enqueueing");
         }
 
+    }
+
+    private void tryThrow(Throwable error) {
+        logger.debug(error.getMessage(), error);
+        if (!ignoreExceptions)
+            throw new RuntimeException(error);
     }
 
     private void tryThrow(String error) {
