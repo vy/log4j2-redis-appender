@@ -2,6 +2,7 @@ package com.vlkan.log4j2.redis.appender;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Appender;
 import org.junit.ClassRule;
 import org.junit.ComparisonFailure;
 import org.junit.Test;
@@ -133,6 +134,16 @@ public class RedisAppenderTest {
             }
         }
 
+        final Appender appender = LOGGER_CONTEXT_RESOURCE.getLoggerContext().getConfiguration().getAppender("REDIS");
+        assertThat(appender).isInstanceOf(RedisAppender.class);
+
+        final RedisAppenderStats stats = ((RedisAppender) appender).getStats();
+        assertThat(stats.getTotalEventCount()).isEqualTo(expectedMessageCount);
+        assertThat(stats.getIgnoredEventCount()).isEqualTo(0);
+        assertThat(stats.getRateLimitFailureCount()).isEqualTo(0);
+        assertThat(stats.getUnavailableBufferSpaceFailureCount()).isEqualTo(0);
+        assertThat(stats.getRedisPushSuccessCount()).isEqualTo(expectedMessageCount);
+        assertThat(stats.getRedisPushFailureCount()).isEqualTo(0);
     }
 
 }

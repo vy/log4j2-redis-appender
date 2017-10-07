@@ -52,6 +52,10 @@
                             <pattern>com.google</pattern>
                             <shadedPattern>${project.groupId}.redis.appender.google</shadedPattern>
                         </relocation>
+                        <relocation>
+                            <pattern>jsr166e</pattern>
+                            <shadedPattern>${project.groupId}.redis.appender.jsr166e</shadedPattern>
+                        </relocation>
                     </relocations>
                     <transformers>
                         <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />

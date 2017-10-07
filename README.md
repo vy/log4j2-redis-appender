@@ -121,10 +121,26 @@ attributes:
 | `batchSize` | int | size of batches fed into Redis `RPUSH` (defaults to 100) |
 | `flushPeriodMillis` | long | buffer flush period (defaults to 1000) |
 | `maxByteCountPerSecond` | double | allowed maximum number of bytes per second (defaults to 0, that is, unlimited) |
-| `jmxBeanName` | String | `RedisThrottlerJmxBean` name (defaults to `org.apache.logging.log4j2:type=<loggerContextName>,component=Appenders,name=<appenderName>,subtype=RedisThrottler`) |
 
 The buffer is flushed if either there are more than `batchSize` events
 queued in the buffer or the last flush was older than `flushPeriodMillis`.
+
+## Performance statistics
+
+`RedisAppender` exposes a number of metrics about its performance:
+
+| Metric | Type | Description |
+|----------------|------|-------------|
+| `TotalEventCount` | counter | Total number of events passed in to the appender |
+| `IgnoredEventCount` | counter | Number of events dropped due to a previous failure |
+| `RateLimitFailureCount` | counter | Number of events dropped due to a rate limit |
+| `UnavailableBufferSpaceFailureCount` | counter | Number of events dropped due to a buffer being overflown |
+| `RedisPushFailureCount` | counter | Number of events dropped due to a failed `Redis` push |
+| `RedisPushSuccessCount` | counter | Number of events successfully pushed to `Redis` |
+
+Eventually, the following equality should hold true:
+
+`TotalEventCount == IgnoredEventCount + RateLimitFailureCount + UnavailableBufferSpaceFailureCount + RedisPushFailureCount + RedisPushSuccessCount` 
 
 Fat JAR
 =======

@@ -73,6 +73,7 @@
         <jedis.version>2.9.0</jedis.version>
         <junit.version>4.11</junit.version>
         <log4j2.version>2.8.2</log4j2.version>
+        <jsr166e.version>1.0</jsr166e.version>
 
         <!-- plugin versions -->
         <maven-compiler-plugin.version>3.6.1</maven-compiler-plugin.version>
@@ -97,6 +98,12 @@
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>${guava.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.gatling</groupId>
+                <artifactId>jsr166e</artifactId>
+                <version>${jsr166e.version}</version>
             </dependency>
 
             <dependency>
