@@ -6,7 +6,9 @@ public interface RedisAppenderStats {
 
     long getIgnoredEventCount();
 
-    long getRateLimitFailureCount();
+    long getEventRateLimitFailureCount();
+
+    long getByteRateLimitFailureCount();
 
     long getUnavailableBufferSpaceFailureCount();
 

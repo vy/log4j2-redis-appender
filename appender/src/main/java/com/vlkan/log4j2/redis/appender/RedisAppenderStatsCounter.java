@@ -9,7 +9,9 @@ class RedisAppenderStatsCounter implements RedisAppenderStats {
 
     private final LongAdder ignoredEventCount = new LongAdder();
 
-    private final LongAdder rateLimitFailureCount = new LongAdder();
+    private final LongAdder eventRateLimitFailureCount = new LongAdder();
+
+    private final LongAdder byteRateLimitFailureCount = new LongAdder();
 
     private final LongAdder unavailableBufferSpaceFailureCount = new LongAdder();
 
@@ -32,8 +34,13 @@ class RedisAppenderStatsCounter implements RedisAppenderStats {
     }
 
     @Override
-    public long getRateLimitFailureCount() {
-        return rateLimitFailureCount.sum();
+    public long getEventRateLimitFailureCount() {
+        return eventRateLimitFailureCount.sum();
+    }
+
+    @Override
+    public long getByteRateLimitFailureCount() {
+        return byteRateLimitFailureCount.sum();
     }
 
     @Override
@@ -59,8 +66,12 @@ class RedisAppenderStatsCounter implements RedisAppenderStats {
         ignoredEventCount.add(eventCount);
     }
 
-    void recordRateLimitFailure(long eventCount) {
-        rateLimitFailureCount.add(eventCount);
+    void recordEventRateLimitFailure(long eventCount) {
+        eventRateLimitFailureCount.add(eventCount);
+    }
+
+    void recordByteRateLimitFailure(long eventCount) {
+        byteRateLimitFailureCount.add(eventCount);
     }
 
     void recordUnavailableBufferSpaceFailure(long eventCount) {
@@ -81,7 +92,8 @@ class RedisAppenderStatsCounter implements RedisAppenderStats {
                 .toStringHelper(this)
                 .add("totalEventCount", getTotalEventCount())
                 .add("ignoredEventCount", getIgnoredEventCount())
-                .add("rateLimitFailureCount", getRateLimitFailureCount())
+                .add("eventRateLimitFailureCount", getEventRateLimitFailureCount())
+                .add("byteRateLimitFailureCount", getByteRateLimitFailureCount())
                 .add("unavailableBufferSpaceFailureCount", getUnavailableBufferSpaceFailureCount())
                 .add("redisPushFailureCount", getRedisPushFailureCount())
                 .add("redisPushSuccessCount", getRedisPushSuccessCount())

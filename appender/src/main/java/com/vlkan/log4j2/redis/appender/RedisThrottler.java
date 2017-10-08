@@ -22,7 +22,9 @@ class RedisThrottler implements AutoCloseable {
 
     private final Thread flushTrigger;
 
-    private final RateLimiter rateLimiter;
+    private final RateLimiter eventPerSecondLimiter;
+
+    private final RateLimiter bytePerSecondLimiter;
 
     private final DebugLogger logger;
 
@@ -41,7 +43,8 @@ class RedisThrottler implements AutoCloseable {
         this.buffer = new ArrayBlockingQueue<>(config.getBufferSize());
         this.batch = new byte[config.getBatchSize()][];
         this.flushTrigger = createFlushTrigger();
-        this.rateLimiter = config.getMaxByteCountPerSecond() > 0 ? RateLimiter.create(config.getMaxByteCountPerSecond()) : null;
+        this.eventPerSecondLimiter = config.getMaxEventCountPerSecond() > 0 ? RateLimiter.create(config.getMaxEventCountPerSecond()) : null;
+        this.bytePerSecondLimiter = config.getMaxByteCountPerSecond() > 0 ? RateLimiter.create(config.getMaxByteCountPerSecond()) : null;
         this.logger = new DebugLogger(RedisThrottler.class, debugEnabled);
     }
 
@@ -126,9 +129,15 @@ class RedisThrottler implements AutoCloseable {
             return;
         }
 
-        if (rateLimiter != null && !rateLimiter.tryAcquire(event.length)) {
-            statsCounter.recordRateLimitFailure(1);
-            tryThrow("failed acquiring rate limiter token");
+        if (eventPerSecondLimiter != null && !eventPerSecondLimiter.tryAcquire()) {
+            statsCounter.recordEventRateLimitFailure(1);
+            tryThrow("failed acquiring event rate limiter token");
+            return;
+        }
+
+        if (bytePerSecondLimiter != null && !bytePerSecondLimiter.tryAcquire(event.length)) {
+            statsCounter.recordByteRateLimitFailure(1);
+            tryThrow("failed acquiring byte rate limiter token");
             return;
         }
 

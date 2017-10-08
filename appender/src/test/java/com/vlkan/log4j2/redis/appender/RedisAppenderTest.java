@@ -140,7 +140,8 @@ public class RedisAppenderTest {
         final RedisAppenderStats stats = ((RedisAppender) appender).getStats();
         assertThat(stats.getTotalEventCount()).isEqualTo(expectedMessageCount);
         assertThat(stats.getIgnoredEventCount()).isEqualTo(0);
-        assertThat(stats.getRateLimitFailureCount()).isEqualTo(0);
+        assertThat(stats.getEventRateLimitFailureCount()).isEqualTo(0);
+        assertThat(stats.getByteRateLimitFailureCount()).isEqualTo(0);
         assertThat(stats.getUnavailableBufferSpaceFailureCount()).isEqualTo(0);
         assertThat(stats.getRedisPushSuccessCount()).isEqualTo(expectedMessageCount);
         assertThat(stats.getRedisPushFailureCount()).isEqualTo(0);
