@@ -45,6 +45,7 @@ Below you can find a sample `log4j2.xml` snippet employing `RedisAppender`.
             <RedisThrottlerConfig bufferSize="500"
                                   batchSize="100"
                                   flushPeriodMillis="1000"
+                                  maxEventCountPerSecond="10"
                                   maxByteCountPerSecond="100"/>
         </RedisAppender>
     </Appenders>
@@ -120,11 +121,29 @@ attributes:
 | `bufferSize` | int | `LogEvent` buffer size (defaults to 500) |
 | `batchSize` | int | size of batches fed into Redis `RPUSH` (defaults to 100) |
 | `flushPeriodMillis` | long | buffer flush period (defaults to 1000) |
+| `maxEventCountPerSecond` | double | allowed maximum number of `LogEvent`s per second (defaults to 0, that is, unlimited) |
 | `maxByteCountPerSecond` | double | allowed maximum number of bytes per second (defaults to 0, that is, unlimited) |
-| `jmxBeanName` | String | `RedisThrottlerJmxBean` name (defaults to `org.apache.logging.log4j2:type=<loggerContextName>,component=Appenders,name=<appenderName>,subtype=RedisThrottler`) |
 
 The buffer is flushed if either there are more than `batchSize` events
 queued in the buffer or the last flush was older than `flushPeriodMillis`.
+
+## Performance statistics
+
+`RedisAppender` exposes a number of metrics about its performance:
+
+| Metric | Type | Description |
+|----------------|------|-------------|
+| `TotalEventCount` | counter | Total number of events passed in to the appender |
+| `IgnoredEventCount` | counter | Number of events dropped due to a previous failure |
+| `EventRateLimitFailureCount` | counter | Number of events dropped due to a limit on `LogEvents per second` being exceeded |
+| `ByteRateLimitFailureCount` | counter | Number of events dropped due to a limit on `bytes per second` being exceeded |
+| `UnavailableBufferSpaceFailureCount` | counter | Number of events dropped due to a buffer being overflown |
+| `RedisPushFailureCount` | counter | Number of events dropped due to a failed `Redis` push |
+| `RedisPushSuccessCount` | counter | Number of events successfully pushed to `Redis` |
+
+Eventually, the following equality should hold true:
+
+`TotalEventCount == IgnoredEventCount + EventRateLimitFailureCount + ByteRateLimitFailureCount + UnavailableBufferSpaceFailureCount + RedisPushFailureCount + RedisPushSuccessCount` 
 
 Fat JAR
 =======
