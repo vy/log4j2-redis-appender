@@ -6,7 +6,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class RedisThrottlerInternalJmxBean implements RedisThrottlerJmxBean {
 
-    private final AtomicLong totalEventCount = new AtomicLong();
+    private final AtomicLong totalEventCount = new AtomicLong(0);
+
+    private final AtomicLong ignoredEventCount = new AtomicLong(0);
 
     private final AtomicLong eventRateLimitFailureCount = new AtomicLong(0);
 
@@ -36,6 +38,22 @@ public class RedisThrottlerInternalJmxBean implements RedisThrottlerJmxBean {
     @Override
     public void incrementTotalEventCount(long count) {
         totalEventCount.addAndGet(count);
+    }
+
+    @Override
+    public long getIgnoredEventCount() {
+        return ignoredEventCount.get();
+    }
+
+    @Override
+    public long setIgnoredEventCount(long count) {
+        ignoredEventCount.set(count);
+        return count;
+    }
+
+    @Override
+    public void incrementIgnoredEventCount(long count) {
+        ignoredEventCount.addAndGet(count);
     }
 
     @Override
@@ -123,6 +141,7 @@ public class RedisThrottlerInternalJmxBean implements RedisThrottlerJmxBean {
         return MoreObjects
                 .toStringHelper(this)
                 .add("totalEventCount", totalEventCount.get())
+                .add("ignoredEventCount", ignoredEventCount.get())
                 .add("eventRateLimitFailureCount", eventRateLimitFailureCount.get())
                 .add("byteRateLimitFailureCount", byteRateLimitFailureCount.get())
                 .add("unavailableBufferSpaceFailureCount", unavailableBufferSpaceFailureCount.get())

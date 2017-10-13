@@ -2,6 +2,7 @@ package com.vlkan.log4j2.redis.appender;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Appender;
 import org.junit.ClassRule;
 import org.junit.ComparisonFailure;
 import org.junit.Test;
@@ -132,6 +133,17 @@ public class RedisAppenderTest {
                 throw new RuntimeException(message, comparisonFailure);
             }
         }
+
+        Appender appender = LOGGER_CONTEXT_RESOURCE.getLoggerContext().getConfiguration().getAppender("REDIS");
+        assertThat(appender).isInstanceOf(RedisAppender.class);
+        RedisThrottlerJmxBean jmxBean = ((RedisAppender) appender).getJmxBean();
+        assertThat(jmxBean.getTotalEventCount()).isEqualTo(expectedMessageCount);
+        assertThat(jmxBean.getIgnoredEventCount()).isEqualTo(0);
+        assertThat(jmxBean.getEventRateLimitFailureCount()).isEqualTo(0);
+        assertThat(jmxBean.getByteRateLimitFailureCount()).isEqualTo(0);
+        assertThat(jmxBean.getUnavailableBufferSpaceFailureCount()).isEqualTo(0);
+        assertThat(jmxBean.getRedisPushSuccessCount()).isEqualTo(expectedMessageCount);
+        assertThat(jmxBean.getRedisPushFailureCount()).isEqualTo(0);
 
     }
 

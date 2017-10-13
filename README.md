@@ -178,6 +178,31 @@ F.A.Q.
   (e.g., `$JAVA_HOME/lib/security/java.policy`) or providing it as an argument
   at runtime, that is, `-Djava.security.policy=someURL`.
 
+- **How can I access JMX bean of an appender?** Once you have a reference to
+  the relevant `LoggerContext`, you can access the instance of the appender
+  and its JMX bean by its name as follows:
+
+  ```java
+  Appender appender = loggerContext.getConfiguration().getAppender("REDIS");
+  RedisThrottlerJmxBean jmxBean = ((RedisAppender) appender).getJmxBean();
+  ```
+
+  You can either create your own `LoggerContext`:
+
+  ```java
+  LoggerContextResource loggerContextResource = new LoggerContextResource("/path/to/log4j2.xml");
+  LoggerContext loggerContext = loggerContextResource.getLoggerContext();
+  ```
+
+  or get a handle to an existing one:
+
+  ```java
+   LoggerContext logContext = (LoggerContext) LogManager.getContext(false);
+   ```
+
+   Here note that you should be using `org.apache.logging.log4j.core.LoggerContext`,
+   not `org.apache.logging.log4j.spi.LoggerContext`.
+
 # License
 
 Copyright &copy; 2017 [Volkan Yazıcı](http://vlkan.com/)

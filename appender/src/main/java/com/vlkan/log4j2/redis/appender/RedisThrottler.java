@@ -158,12 +158,17 @@ class RedisThrottler implements AutoCloseable {
         }
     }
 
+    public RedisThrottlerJmxBean getJmxBean() {
+        return jmxBean;
+    }
+
     public void push(byte[] event) {
 
         jmxBean.incrementTotalEventCount(1);
 
         Throwable thrown = lastThrown.getAndSet(null);
         if (thrown != null) {
+            jmxBean.incrementIgnoredEventCount(1);
             tryThrow(thrown);
             return;
         }

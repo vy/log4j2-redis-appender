@@ -16,6 +16,7 @@
             <RedisThrottlerConfig bufferSize="100"
                                   batchSize="10"
                                   flushPeriodMillis="500"
+                                  maxEventCountPerSecond="0"
                                   maxByteCountPerSecond="0"/>
         </RedisAppender>
     </Appenders>

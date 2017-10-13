@@ -127,6 +127,10 @@ public class RedisAppender implements Appender {
         }
     }
 
+    public RedisThrottlerJmxBean getJmxBean() {
+        return throttler.getJmxBean();
+    }
+
     @Override
     public void append(LogEvent event) {
         logger.debug("appending: %s", event.getMessage().getFormattedMessage());
