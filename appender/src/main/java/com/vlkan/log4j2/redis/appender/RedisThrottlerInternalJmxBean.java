@@ -1,24 +1,23 @@
 package com.vlkan.log4j2.redis.appender;
 
 import com.google.common.base.MoreObjects;
-
-import java.util.concurrent.atomic.AtomicLong;
+import com.twitter.jsr166e.LongAdder;
 
 public class RedisThrottlerInternalJmxBean implements RedisThrottlerJmxBean {
 
-    private final AtomicLong totalEventCount = new AtomicLong(0);
+    private final LongAdder totalEventCount = new LongAdder();
 
-    private final AtomicLong ignoredEventCount = new AtomicLong(0);
+    private final LongAdder ignoredEventCount = new LongAdder();
 
-    private final AtomicLong eventRateLimitFailureCount = new AtomicLong(0);
+    private final LongAdder eventRateLimitFailureCount = new LongAdder();
 
-    private final AtomicLong byteRateLimitFailureCount = new AtomicLong(0);
+    private final LongAdder byteRateLimitFailureCount = new LongAdder();
 
-    private final AtomicLong unavailableBufferSpaceFailureCount = new AtomicLong(0);
+    private final LongAdder unavailableBufferSpaceFailureCount = new LongAdder();
 
-    private final AtomicLong redisPushFailureCount = new AtomicLong(0);
+    private final LongAdder redisPushFailureCount = new LongAdder();
 
-    private final AtomicLong redisPushSuccessCount = new AtomicLong(0);
+    private final LongAdder redisPushSuccessCount = new LongAdder();
 
     public RedisThrottlerInternalJmxBean() {
         // Do nothing.
@@ -26,127 +25,85 @@ public class RedisThrottlerInternalJmxBean implements RedisThrottlerJmxBean {
 
     @Override
     public long getTotalEventCount() {
-        return totalEventCount.get();
-    }
-
-    @Override
-    public long setTotalEventCount(long count) {
-        totalEventCount.set(count);
-        return count;
+        return totalEventCount.sum();
     }
 
     @Override
     public void incrementTotalEventCount(long count) {
-        totalEventCount.addAndGet(count);
+        totalEventCount.add(count);
     }
 
     @Override
     public long getIgnoredEventCount() {
-        return ignoredEventCount.get();
-    }
-
-    @Override
-    public long setIgnoredEventCount(long count) {
-        ignoredEventCount.set(count);
-        return count;
+        return ignoredEventCount.sum();
     }
 
     @Override
     public void incrementIgnoredEventCount(long count) {
-        ignoredEventCount.addAndGet(count);
+        ignoredEventCount.add(count);
     }
 
     @Override
     public long getEventRateLimitFailureCount() {
-        return eventRateLimitFailureCount.get();
-    }
-
-    @Override
-    public long setEventRateLimitFailureCount(long count) {
-        eventRateLimitFailureCount.set(count);
-        return count;
+        return eventRateLimitFailureCount.sum();
     }
 
     @Override
     public void incrementEventRateLimitFailureCount(long increment) {
-        eventRateLimitFailureCount.addAndGet(increment);
+        eventRateLimitFailureCount.add(increment);
     }
 
     @Override
     public long getByteRateLimitFailureCount() {
-        return byteRateLimitFailureCount.get();
-    }
-
-    @Override
-    public long setByteRateLimitFailureCount(long count) {
-        byteRateLimitFailureCount.set(count);
-        return count;
+        return byteRateLimitFailureCount.sum();
     }
 
     @Override
     public void incrementByteRateLimitFailureCount(long increment) {
-        byteRateLimitFailureCount.addAndGet(increment);
+        byteRateLimitFailureCount.add(increment);
     }
 
     @Override
     public long getUnavailableBufferSpaceFailureCount() {
-        return unavailableBufferSpaceFailureCount.get();
-    }
-
-    @Override
-    public long setUnavailableBufferSpaceFailureCount(long count) {
-        unavailableBufferSpaceFailureCount.set(count);
-        return count;
+        return unavailableBufferSpaceFailureCount.sum();
     }
 
     @Override
     public void incrementUnavailableBufferSpaceFailureCount(long increment) {
-        unavailableBufferSpaceFailureCount.addAndGet(increment);
+        unavailableBufferSpaceFailureCount.add(increment);
     }
 
     @Override
     public long getRedisPushFailureCount() {
-        return redisPushFailureCount.get();
-    }
-
-    @Override
-    public long setRedisPushFailureCount(int count) {
-        redisPushFailureCount.set(count);
-        return count;
+        return redisPushFailureCount.sum();
     }
 
     @Override
     public void incrementRedisPushFailureCount(int increment) {
-        redisPushFailureCount.addAndGet(increment);
+        redisPushFailureCount.add(increment);
     }
 
     @Override
     public long getRedisPushSuccessCount() {
-        return redisPushSuccessCount.get();
-    }
-
-    @Override
-    public long setRedisPushSuccessCount(int count) {
-        redisPushSuccessCount.set(count);
-        return count;
+        return redisPushSuccessCount.sum();
     }
 
     @Override
     public void incrementRedisPushSuccessCount(int increment) {
-        redisPushSuccessCount.addAndGet(increment);
+        redisPushSuccessCount.add(increment);
     }
 
     @Override
     public String toString() {
         return MoreObjects
                 .toStringHelper(this)
-                .add("totalEventCount", totalEventCount.get())
-                .add("ignoredEventCount", ignoredEventCount.get())
-                .add("eventRateLimitFailureCount", eventRateLimitFailureCount.get())
-                .add("byteRateLimitFailureCount", byteRateLimitFailureCount.get())
-                .add("unavailableBufferSpaceFailureCount", unavailableBufferSpaceFailureCount.get())
-                .add("redisPushFailureCount", redisPushFailureCount.get())
-                .add("redisPushSuccessCount", redisPushSuccessCount.get())
+                .add("totalEventCount", totalEventCount.sum())
+                .add("ignoredEventCount", ignoredEventCount.sum())
+                .add("eventRateLimitFailureCount", eventRateLimitFailureCount.sum())
+                .add("byteRateLimitFailureCount", byteRateLimitFailureCount.sum())
+                .add("unavailableBufferSpaceFailureCount", unavailableBufferSpaceFailureCount.sum())
+                .add("redisPushFailureCount", redisPushFailureCount.sum())
+                .add("redisPushSuccessCount", redisPushSuccessCount.sum())
                 .toString();
     }
 

@@ -7,16 +7,12 @@ public interface RedisThrottlerJmxBean {
      */
     long getTotalEventCount();
 
-    long setTotalEventCount(long count);
-
-    void incrementTotalEventCount(long count);
+    void incrementTotalEventCount(long increment);
 
     /**
      * Number of events dropped due to a previous internal (e.g., Redis push) failure.
      */
     long getIgnoredEventCount();
-
-    long setIgnoredEventCount(long count);
 
     void incrementIgnoredEventCount(long increment);
 
@@ -25,16 +21,12 @@ public interface RedisThrottlerJmxBean {
      */
     long getEventRateLimitFailureCount();
 
-    long setEventRateLimitFailureCount(long count);
-
     void incrementEventRateLimitFailureCount(long increment);
 
     /**
      * Number of events dropped due to byte rate limit violation.
      */
     long getByteRateLimitFailureCount();
-
-    long setByteRateLimitFailureCount(long count);
 
     void incrementByteRateLimitFailureCount(long increment);
 
@@ -43,8 +35,6 @@ public interface RedisThrottlerJmxBean {
      */
     long getUnavailableBufferSpaceFailureCount();
 
-    long setUnavailableBufferSpaceFailureCount(long count);
-
     void incrementUnavailableBufferSpaceFailureCount(long increment);
 
     /**
@@ -52,16 +42,12 @@ public interface RedisThrottlerJmxBean {
      */
     long getRedisPushFailureCount();
 
-    long setRedisPushFailureCount(int count);
-
     void incrementRedisPushFailureCount(int increment);
 
     /**
      * Number of succeeded Redis pushes.
      */
     long getRedisPushSuccessCount();
-
-    long setRedisPushSuccessCount(int count);
 
     void incrementRedisPushSuccessCount(int increment);
 

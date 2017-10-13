@@ -52,6 +52,10 @@
                             <pattern>com.google</pattern>
                             <shadedPattern>${project.groupId}.redis.appender.google</shadedPattern>
                         </relocation>
+                        <relocation>
+                            <pattern>com.twitter</pattern>
+                            <shadedPattern>${project.groupId}.redis.appender.twitter</shadedPattern>
+                        </relocation>
                     </relocations>
                     <transformers>
                         <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
