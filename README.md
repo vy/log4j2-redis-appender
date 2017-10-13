@@ -203,6 +203,11 @@ F.A.Q.
    Here note that you should be using `org.apache.logging.log4j.core.LoggerContext`,
    not `org.apache.logging.log4j.spi.LoggerContext`.
 
+Contributors
+============
+
+- [Yaroslav Skopets](https://github.com/yskopets)
+
 # License
 
 Copyright &copy; 2017 [Volkan Yazıcı](http://vlkan.com/)
