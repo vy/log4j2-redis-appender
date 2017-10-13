@@ -1,5 +1,6 @@
 [![Build Status](https://secure.travis-ci.org/vy/log4j2-redis-appender.svg)](http://travis-ci.org/vy/hrrs)
 [![Maven Central](https://img.shields.io/maven-central/v/com.vlkan.log4j2/log4j2-redis-appender-parent.svg)](https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.vlkan.log4j2%22)
+[![License](https://img.shields.io/github/license/vy/log4j2-redis-appender.svg)](https://www.gnu.org/licenses/gpl.html)
 
 `RedisAppender` plugin provides a [Log4j 2.x](https://logging.apache.org/log4j/2.x/)
 appender for [Redis](https://redis.io/) in-memory data structure store. The plugin
