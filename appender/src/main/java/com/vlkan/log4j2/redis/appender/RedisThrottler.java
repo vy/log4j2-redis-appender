@@ -10,6 +10,8 @@ import javax.management.ObjectName;
 import javax.management.StandardMBean;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -18,6 +20,16 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.google.common.base.MoreObjects.firstNonNull;
 
 class RedisThrottler implements AutoCloseable {
+
+    /**
+     * Reference count of JMX beans.
+     * <p>
+     * Certain applications (e.g., Spring Boot) known to reconfigure <code>LoggerContext</code> multiple times. This
+     * triggers multiple interleaved start-stop calls causing <code>RedisThrottler</code> to unregister an in-use
+     * JMX bean. <code>jmxBeanReferenceCountByName</code> keeps the reference counts to created JMX beans and
+     * unregisters them at close if there are no more references.
+     */
+    private static final Map<ObjectName, Integer> jmxBeanReferenceCountByName = new HashMap<>();
 
     private final RedisThrottlerConfig config;
 
@@ -187,13 +199,28 @@ class RedisThrottler implements AutoCloseable {
     private RedisThrottlerJmxBean registerOrGetJmxBean() {
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
         try {
-            try {
-                RedisThrottlerInternalJmxBean jmxBean = new RedisThrottlerInternalJmxBean();
-                StandardMBean jmxBeanWrapper = new StandardMBean(jmxBean, RedisThrottlerJmxBean.class);
-                mbs.registerMBean(jmxBeanWrapper, jmxBeanName);
+            synchronized (jmxBeanReferenceCountByName) {
+
+                // Get the reference count for the JMX bean.
+                Integer jmxBeanReferenceCount = jmxBeanReferenceCountByName.get(jmxBeanName);
+                if (jmxBeanReferenceCount == null) {
+                    jmxBeanReferenceCount = 0;
+                }
+
+                // Create or get the JMX bean.
+                RedisThrottlerJmxBean jmxBean;
+                try {
+                    jmxBean = new RedisThrottlerInternalJmxBean();
+                    StandardMBean jmxBeanWrapper = new StandardMBean(jmxBean, RedisThrottlerJmxBean.class);
+                    mbs.registerMBean(jmxBeanWrapper, jmxBeanName);
+                } catch (InstanceAlreadyExistsException ignored) {
+                    jmxBean = JMX.newMBeanProxy(mbs, jmxBeanName, RedisThrottlerJmxBean.class);
+                }
+
+                // Increment the reference count and return the JMX bean.
+                jmxBeanReferenceCountByName.put(jmxBeanName, jmxBeanReferenceCount + 1);
                 return jmxBean;
-            } catch (InstanceAlreadyExistsException ignored) {
-                return JMX.newMBeanProxy(mbs, jmxBeanName, RedisThrottlerJmxBean.class);
+
             }
         } catch (Throwable error) {
             String message = String.format("failed accessing the JMX bean (jmxBeanName=%s)", jmxBeanName);
@@ -210,10 +237,33 @@ class RedisThrottler implements AutoCloseable {
 
     private void unregisterJmxBean() {
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-        try {
-            mbs.unregisterMBean(jmxBeanName);
-        } catch (Throwable error) {
-            logger.debug("failed unregistering the JMX bean (jmxBeanName=%s)", jmxBeanName);
+        synchronized (jmxBeanReferenceCountByName) {
+
+            // Get the reference count for the JMX bean.
+            Integer jmxBeanReferenceCount = jmxBeanReferenceCountByName.get(jmxBeanName);
+
+            // Check if we have a valid state, that is, jmxBeanReferenceCount > 0.
+            if (jmxBeanReferenceCount == null || jmxBeanReferenceCount == 0) {
+                logger.debug(
+                        "failed unregistering the JMX bean (jmxBeanName=%s, jmxBeanReferenceCount=%s)",
+                        jmxBeanName, jmxBeanReferenceCount);
+            }
+
+            // If there is just a single reference so far, it is safe to unregister the bean.
+            else if (jmxBeanReferenceCount == 1) {
+                try {
+                    mbs.unregisterMBean(jmxBeanName);
+                    jmxBeanReferenceCountByName.remove(jmxBeanName);
+                } catch (Throwable error) {
+                    logger.debug("failed unregistering the JMX bean (jmxBeanName=%s)", jmxBeanName);
+                }
+            }
+
+            // Apparently there are more consumers of the bean. Just decrement the reference count.
+            else {
+                jmxBeanReferenceCountByName.put(jmxBeanName, jmxBeanReferenceCount - 1);
+            }
+
         }
     }
 
