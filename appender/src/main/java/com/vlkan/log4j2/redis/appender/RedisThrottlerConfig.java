@@ -19,6 +19,8 @@ public class RedisThrottlerConfig {
 
     private final long flushPeriodMillis;
 
+    private final double maxEventCountPerSecond;
+
     private final double maxByteCountPerSecond;
 
     private final String jmxBeanName;
@@ -27,6 +29,7 @@ public class RedisThrottlerConfig {
         this.bufferSize = builder.bufferSize;
         this.batchSize = builder.batchSize;
         this.flushPeriodMillis = builder.flushPeriodMillis;
+        this.maxEventCountPerSecond = builder.maxEventCountPerSecond;
         this.maxByteCountPerSecond = builder.maxByteCountPerSecond;
         this.jmxBeanName = isBlank(builder.jmxBeanName) ? null : builder.jmxBeanName;
     }
@@ -43,6 +46,10 @@ public class RedisThrottlerConfig {
         return flushPeriodMillis;
     }
 
+    public double getMaxEventCountPerSecond() {
+        return maxEventCountPerSecond;
+    }
+
     public double getMaxByteCountPerSecond() {
         return maxByteCountPerSecond;
     }
@@ -56,6 +63,7 @@ public class RedisThrottlerConfig {
         return "RedisThrottlerConfig{bufferSize=" + bufferSize +
                 ", batchSize=" + batchSize +
                 ", flushPeriodMillis=" + flushPeriodMillis +
+                ", maxEventCountPerSecond=" + maxEventCountPerSecond +
                 ", maxByteCountPerSecond=" + maxByteCountPerSecond +
                 ", jmxBeanName=" + jmxBeanName +
                 '}';
@@ -76,6 +84,9 @@ public class RedisThrottlerConfig {
 
         @PluginBuilderAttribute
         private long flushPeriodMillis = 1000;
+
+        @PluginBuilderAttribute
+        private double maxEventCountPerSecond = 0;
 
         @PluginBuilderAttribute
         private double maxByteCountPerSecond = 0;
@@ -114,6 +125,15 @@ public class RedisThrottlerConfig {
             return this;
         }
 
+        public double getMaxEventCountPerSecond() {
+            return maxEventCountPerSecond;
+        }
+
+        public Builder setMaxEventCountPerSecond(double maxEventCountPerSecond) {
+            this.maxEventCountPerSecond = maxEventCountPerSecond;
+            return this;
+        }
+
         public double getMaxByteCountPerSecond() {
             return maxByteCountPerSecond;
         }
@@ -148,6 +168,10 @@ public class RedisThrottlerConfig {
                     "expecting: flushPeriodMillis > 0, found: %s",
                     flushPeriodMillis);
             requireArgument(
+                    maxEventCountPerSecond >= 0,
+                    "expecting: maxEventCountPerSecond >= 0, found: %d",
+                    maxEventCountPerSecond);
+            requireArgument(
                     maxByteCountPerSecond >= 0,
                     "expecting: maxByteCountPerSecond >= 0, found: %d",
                     maxByteCountPerSecond);
@@ -158,6 +182,7 @@ public class RedisThrottlerConfig {
             return "Builder{bufferSize=" + bufferSize +
                     ", batchSize=" + batchSize +
                     ", flushPeriodMillis=" + flushPeriodMillis +
+                    ", maxEventCountPerSecond=" + maxEventCountPerSecond +
                     ", maxByteCountPerSecond=" + maxByteCountPerSecond +
                     ", jmxBeanName=" + jmxBeanName +
                     '}';

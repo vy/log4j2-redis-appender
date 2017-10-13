@@ -43,7 +43,9 @@ class RedisThrottler implements AutoCloseable {
 
     private final Thread flushTrigger;
 
-    private final RateLimiter rateLimiter;
+    private final RateLimiter eventRateLimiter;
+
+    private final RateLimiter byteRateLimiter;
 
     private final DebugLogger logger;
 
@@ -64,7 +66,8 @@ class RedisThrottler implements AutoCloseable {
         this.buffer = new ArrayBlockingQueue<>(config.getBufferSize());
         this.batch = new byte[config.getBatchSize()][];
         this.flushTrigger = createFlushTrigger();
-        this.rateLimiter = config.getMaxByteCountPerSecond() > 0 ? RateLimiter.create(config.getMaxByteCountPerSecond()) : null;
+        this.eventRateLimiter = config.getMaxEventCountPerSecond() > 0 ? RateLimiter.create(config.getMaxEventCountPerSecond()) : null;
+        this.byteRateLimiter = config.getMaxByteCountPerSecond() > 0 ? RateLimiter.create(config.getMaxByteCountPerSecond()) : null;
         this.logger = new DebugLogger(RedisThrottler.class, debugEnabled);
         this.jmxBeanName = createJmxBeanName();
     }
@@ -165,9 +168,15 @@ class RedisThrottler implements AutoCloseable {
             return;
         }
 
-        if (rateLimiter != null && !rateLimiter.tryAcquire(event.length)) {
-            jmxBean.incrementRateLimitFailureCount(1);
-            tryThrow("failed acquiring rate limiter token");
+        if (eventRateLimiter != null && !eventRateLimiter.tryAcquire()) {
+            jmxBean.incrementByteRateLimitFailureCount(1);
+            tryThrow("failed acquiring event rate limiter token");
+            return;
+        }
+
+        if (byteRateLimiter != null && !byteRateLimiter.tryAcquire(event.length)) {
+            jmxBean.incrementByteRateLimitFailureCount(1);
+            tryThrow("failed acquiring byte rate limiter token");
             return;
         }
 

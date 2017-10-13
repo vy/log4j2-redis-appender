@@ -8,11 +8,17 @@ public interface RedisThrottlerJmxBean {
 
     void incrementTotalEventCount(long count);
 
-    long getRateLimitFailureCount();
+    long getEventRateLimitFailureCount();
 
-    long setRateLimitFailureCount(long count);
+    long setEventRateLimitFailureCount(long count);
 
-    void incrementRateLimitFailureCount(long increment);
+    void incrementEventRateLimitFailureCount(long increment);
+
+    long getByteRateLimitFailureCount();
+
+    long setByteRateLimitFailureCount(long count);
+
+    void incrementByteRateLimitFailureCount(long increment);
 
     long getUnavailableBufferSpaceFailureCount();
 

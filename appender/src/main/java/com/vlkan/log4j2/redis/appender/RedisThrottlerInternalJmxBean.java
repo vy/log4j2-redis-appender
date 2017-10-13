@@ -8,7 +8,9 @@ public class RedisThrottlerInternalJmxBean implements RedisThrottlerJmxBean {
 
     private final AtomicLong totalEventCount = new AtomicLong();
 
-    private final AtomicLong rateLimitFailureCount = new AtomicLong(0);
+    private final AtomicLong eventRateLimitFailureCount = new AtomicLong(0);
+
+    private final AtomicLong byteRateLimitFailureCount = new AtomicLong(0);
 
     private final AtomicLong unavailableBufferSpaceFailureCount = new AtomicLong(0);
 
@@ -37,19 +39,35 @@ public class RedisThrottlerInternalJmxBean implements RedisThrottlerJmxBean {
     }
 
     @Override
-    public long getRateLimitFailureCount() {
-        return rateLimitFailureCount.get();
+    public long getEventRateLimitFailureCount() {
+        return eventRateLimitFailureCount.get();
     }
 
     @Override
-    public long setRateLimitFailureCount(long count) {
-        rateLimitFailureCount.set(count);
+    public long setEventRateLimitFailureCount(long count) {
+        eventRateLimitFailureCount.set(count);
         return count;
     }
 
     @Override
-    public void incrementRateLimitFailureCount(long increment) {
-        rateLimitFailureCount.addAndGet(increment);
+    public void incrementEventRateLimitFailureCount(long increment) {
+        eventRateLimitFailureCount.addAndGet(increment);
+    }
+
+    @Override
+    public long getByteRateLimitFailureCount() {
+        return byteRateLimitFailureCount.get();
+    }
+
+    @Override
+    public long setByteRateLimitFailureCount(long count) {
+        byteRateLimitFailureCount.set(count);
+        return count;
+    }
+
+    @Override
+    public void incrementByteRateLimitFailureCount(long increment) {
+        byteRateLimitFailureCount.addAndGet(increment);
     }
 
     @Override
@@ -105,7 +123,8 @@ public class RedisThrottlerInternalJmxBean implements RedisThrottlerJmxBean {
         return MoreObjects
                 .toStringHelper(this)
                 .add("totalEventCount", totalEventCount.get())
-                .add("rateLimitFailureCount", rateLimitFailureCount.get())
+                .add("eventRateLimitFailureCount", eventRateLimitFailureCount.get())
+                .add("byteRateLimitFailureCount", byteRateLimitFailureCount.get())
                 .add("unavailableBufferSpaceFailureCount", unavailableBufferSpaceFailureCount.get())
                 .add("redisPushFailureCount", redisPushFailureCount.get())
                 .add("redisPushSuccessCount", redisPushSuccessCount.get())

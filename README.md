@@ -45,7 +45,8 @@ Below you can find a sample `log4j2.xml` snippet employing `RedisAppender`.
             <RedisThrottlerConfig bufferSize="500"
                                   batchSize="100"
                                   flushPeriodMillis="1000"
-                                  maxByteCountPerSecond="100"/>
+                                  maxEventCountPerSecond="100"
+                                  maxByteCountPerSecond="4194304"/>
         </RedisAppender>
     </Appenders>
     <Loggers>
@@ -120,6 +121,7 @@ attributes:
 | `bufferSize` | int | `LogEvent` buffer size (defaults to 500) |
 | `batchSize` | int | size of batches fed into Redis `RPUSH` (defaults to 100) |
 | `flushPeriodMillis` | long | buffer flush period (defaults to 1000) |
+| `maxEventCountPerSecond` | double | allowed maximum number of events per second (defaults to 0, that is, unlimited) |
 | `maxByteCountPerSecond` | double | allowed maximum number of bytes per second (defaults to 0, that is, unlimited) |
 | `jmxBeanName` | String | `RedisThrottlerJmxBean` name (defaults to `org.apache.logging.log4j2:type=<loggerContextName>,component=Appenders,name=<appenderName>,subtype=RedisThrottler`) |
 
