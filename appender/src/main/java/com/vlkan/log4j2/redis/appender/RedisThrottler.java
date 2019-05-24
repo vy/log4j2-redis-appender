@@ -88,9 +88,8 @@ class RedisThrottler implements AutoCloseable {
     }
 
     private Thread createFlushTrigger() {
-        return new Thread(new Runnable() {
+        Thread thread = new Thread(new Runnable() {
             @Override
-            @SuppressWarnings("InfiniteLoopStatement")
             public void run() {
                 logger.debug("started");
                 do {
@@ -105,6 +104,8 @@ class RedisThrottler implements AutoCloseable {
                 } while (true);
             }
         });
+        thread.setDaemon(true);
+        return thread;
     }
 
     private void flush() throws InterruptedException {
