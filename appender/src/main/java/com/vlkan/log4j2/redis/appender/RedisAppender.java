@@ -142,24 +142,14 @@ public class RedisAppender implements Appender {
 
     @Override
     public void initialize() {
-        changeState(null, State.INITIALIZING, State.INITIALIZED, new Runnable() {
-            @Override
-            public void run() {
-                throttler.start();
-            }
-        });
+        changeState(null, State.INITIALIZING, State.INITIALIZED, throttler::start);
     }
 
     @Override
     public void start() {
         logger.debug("starting");
         ensureInitialized();
-        changeState(State.INITIALIZED, State.STARTING, State.STARTED, new Runnable() {
-            @Override
-            public void run() {
-                connect();
-            }
-        });
+        changeState(State.INITIALIZED, State.STARTING, State.STARTED, this::connect);
     }
 
     private synchronized void ensureInitialized() {

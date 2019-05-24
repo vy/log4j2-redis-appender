@@ -88,24 +88,23 @@ class RedisThrottler implements AutoCloseable {
     }
 
     private Thread createFlushTrigger() {
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                logger.debug("started");
-                do {
-                    logger.debug("flushing");
-                    try {
-                        flush();
-                    } catch (InterruptedException ignored) {
-                        logger.debug("interrupted");
-                        Thread.currentThread().interrupt();
-                        break;
-                    }
-                } while (true);
-            }
-        });
+        Thread thread = new Thread(this::flushContinuously);
         thread.setDaemon(true);
         return thread;
+    }
+
+    private void flushContinuously() {
+        logger.debug("started");
+        do {
+            logger.debug("flushing");
+            try {
+                flush();
+            } catch (InterruptedException ignored) {
+                logger.debug("interrupted");
+                Thread.currentThread().interrupt();
+                break;
+            }
+        } while (true);
     }
 
     private void flush() throws InterruptedException {
