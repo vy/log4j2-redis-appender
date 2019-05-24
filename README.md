@@ -207,6 +207,7 @@ F.A.Q.
 Contributors
 ============
 
+- [Thomas van Kampen](https://github.com/t9t)
 - [Yaroslav Skopets](https://github.com/yskopets)
 
 # License
