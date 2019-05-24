@@ -12,20 +12,16 @@ public class LoggerContextResource extends ExternalResource {
 
     private LoggerContext loggerContext;
 
-    public LoggerContextResource(URI configFileUri) {
+    LoggerContextResource(URI configFileUri) {
         this.configFileUri = configFileUri;
     }
 
-    public URI getConfigFileUri() {
-        return configFileUri;
-    }
-
-    public LoggerContext getLoggerContext() {
+    LoggerContext getLoggerContext() {
         return loggerContext;
     }
 
     @Override
-    protected void before() throws Throwable {
+    protected void before() {
         loggerContext = (LoggerContext) LogManager.getContext(ClassLoader.getSystemClassLoader(), false, configFileUri);
         loggerContext.start();
     }

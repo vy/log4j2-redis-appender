@@ -9,10 +9,10 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import redis.clients.jedis.Jedis;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,21 +26,19 @@ public class RedisAppenderTest {
 
     private static final int MAX_MESSAGE_COUNT = 100;
 
-    public static final String REDIS_KEY = "log4j2-messages";
+    private static final String REDIS_KEY = "log4j2-messages";
 
-    public static final String REDIS_HOST = "localhost";
+    private static final String REDIS_HOST = "localhost";
 
-    public static final String REDIS_PASSWORD = "toosecret";
+    static final String REDIS_PASSWORD = "toosecret";
 
-    public static final int REDIS_PORT = 63790;
+    static final int REDIS_PORT = 63790;
 
     private static final RedisServerResource REDIS_SERVER_RESOURCE = new RedisServerResource(REDIS_PORT, REDIS_PASSWORD);
 
     private static final RedisClientResource REDIS_CLIENT_RESOURCE = new RedisClientResource(REDIS_HOST, REDIS_PORT, REDIS_PASSWORD);
 
-    private static final String CONFIG_FILE_NAME = "log4j2.RedisAppenderTest.xml";
-
-    public static final URI CONFIG_FILE_URI = createConfigFileUri(CONFIG_FILE_NAME);
+    static final URI CONFIG_FILE_URI = createConfigFileUri();
 
     private static final LoggerContextResource LOGGER_CONTEXT_RESOURCE = new LoggerContextResource(CONFIG_FILE_URI);
 
@@ -62,7 +60,7 @@ public class RedisAppenderTest {
 
         private final String message;
 
-        private static volatile int counter = 0;
+        private static AtomicInteger COUNTER = new AtomicInteger(0);
 
         private LogMessage(Level level, String message) {
             this.level = level;
@@ -73,7 +71,7 @@ public class RedisAppenderTest {
             int levelIndex = RANDOM.nextInt(LEVELS.length);
             Level level = LEVELS[levelIndex];
             int messageLength = MIN_MESSAGE_LENGTH + RANDOM.nextInt(MAX_MESSAGE_LENGTH - MIN_MESSAGE_LENGTH);
-            String prefix = String.format("[%d] ", counter++);
+            String prefix = String.format("[%d] ", COUNTER.getAndIncrement());
             StringBuilder messageBuilder = new StringBuilder(prefix);
             while (messageBuilder.length() < messageLength) {
                 char messageChar = (char) RANDOM.nextInt(Character.MAX_VALUE);
@@ -95,17 +93,16 @@ public class RedisAppenderTest {
 
     }
 
-    private static URI createConfigFileUri(String configFileName) {
+    private static URI createConfigFileUri() {
         try {
-            return new URI("classpath:" + configFileName);
+            return new URI("classpath:log4j2.RedisAppenderTest.xml");
         } catch (URISyntaxException error) {
-            String message = String.format("failed finding Log4j config (filename=%s)", configFileName);
-            throw new RuntimeException(message, error);
+            throw new RuntimeException("failed finding Log4j config", error);
         }
     }
 
     @Test
-    public void test_messages_are_enqueued_to_redis() throws IOException, InterruptedException {
+    public void test_messages_are_enqueued_to_redis() throws InterruptedException {
 
         LOGGER.debug("creating the logger");
         Logger logger = LOGGER_CONTEXT_RESOURCE.getLoggerContext().getLogger(RedisAppenderTest.class.getCanonicalName());

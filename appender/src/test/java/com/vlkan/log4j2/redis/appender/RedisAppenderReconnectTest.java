@@ -8,9 +8,6 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import redis.embedded.RedisServer;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-
 import static com.vlkan.log4j2.redis.appender.RedisAppenderTest.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,7 +25,7 @@ public class RedisAppenderReconnectTest {
             .around(LOGGER_CONTEXT_RESOURCE);
 
     @Test
-    public void test_reconnect() throws URISyntaxException, IOException, InterruptedException {
+    public void test_reconnect() throws InterruptedException {
         LoggerContext loggerContext = LOGGER_CONTEXT_RESOURCE.getLoggerContext();
         RedisServer redisServer = REDIS_SERVER_RESOURCE.getRedisServer();
         try {

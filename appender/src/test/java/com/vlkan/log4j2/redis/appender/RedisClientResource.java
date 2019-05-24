@@ -13,7 +13,7 @@ public class RedisClientResource extends ExternalResource {
 
     private final Jedis client;
 
-    public RedisClientResource(String host, int port, String password) {
+    RedisClientResource(String host, int port, String password) {
         this.host = host;
         this.port = port;
         this.password = password;
@@ -21,7 +21,7 @@ public class RedisClientResource extends ExternalResource {
     }
 
     @Override
-    protected void before() throws Throwable {
+    protected void before() {
         client.connect();
         client.auth(password);
     }
@@ -31,7 +31,7 @@ public class RedisClientResource extends ExternalResource {
         client.disconnect();
     }
 
-    public Jedis getClient() {
+    Jedis getClient() {
         return client;
     }
 

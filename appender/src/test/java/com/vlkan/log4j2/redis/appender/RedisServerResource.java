@@ -10,7 +10,7 @@ public class RedisServerResource extends ExternalResource {
 
     private final RedisServer redisServer;
 
-    public RedisServerResource(int port, String password) {
+    RedisServerResource(int port, String password) {
         this.port = port;
         try {
             RedisExecProvider redisExecProvider = RedisExecProvider.defaultProvider();
@@ -26,16 +26,12 @@ public class RedisServerResource extends ExternalResource {
         }
     }
 
-    public int getPort() {
-        return port;
-    }
-
-    public RedisServer getRedisServer() {
+    RedisServer getRedisServer() {
         return redisServer;
     }
 
     @Override
-    protected void before() throws Throwable {
+    protected void before() {
         redisServer.start();
     }
 
