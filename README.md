@@ -1,4 +1,4 @@
-[![Build Status](https://secure.travis-ci.org/vy/log4j2-redis-appender.svg)](http://travis-ci.org/vy/hrrs)
+[![Build Status](https://secure.travis-ci.org/vy/log4j2-redis-appender.svg)](http://travis-ci.org/vy/log4j2-redis-appender)
 [![Maven Central](https://img.shields.io/maven-central/v/com.vlkan.log4j2/log4j2-redis-appender-parent.svg)](https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.vlkan.log4j2%22)
 [![License](https://img.shields.io/github/license/vy/log4j2-redis-appender.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
 
