@@ -1,6 +1,6 @@
 package com.vlkan.log4j2.redis.appender;
 
-import com.google.common.util.concurrent.RateLimiter;
+import com.vlkan.log4j2.redis.appender.guava.GuavaRateLimiter;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.JMX;
@@ -16,8 +16,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static com.google.common.base.MoreObjects.firstNonNull;
 
 class RedisThrottler implements AutoCloseable {
 
@@ -43,9 +41,9 @@ class RedisThrottler implements AutoCloseable {
 
     private final Thread flushTrigger;
 
-    private final RateLimiter eventRateLimiter;
+    private final GuavaRateLimiter eventRateLimiter;
 
-    private final RateLimiter byteRateLimiter;
+    private final GuavaRateLimiter byteRateLimiter;
 
     private final DebugLogger logger;
 
@@ -66,19 +64,20 @@ class RedisThrottler implements AutoCloseable {
         this.buffer = new ArrayBlockingQueue<>(config.getBufferSize());
         this.batch = new byte[config.getBatchSize()][];
         this.flushTrigger = createFlushTrigger();
-        this.eventRateLimiter = config.getMaxEventCountPerSecond() > 0 ? RateLimiter.create(config.getMaxEventCountPerSecond()) : null;
-        this.byteRateLimiter = config.getMaxByteCountPerSecond() > 0 ? RateLimiter.create(config.getMaxByteCountPerSecond()) : null;
+        this.eventRateLimiter = config.getMaxEventCountPerSecond() > 0 ? GuavaRateLimiter.create(config.getMaxEventCountPerSecond()) : null;
+        this.byteRateLimiter = config.getMaxByteCountPerSecond() > 0 ? GuavaRateLimiter.create(config.getMaxByteCountPerSecond()) : null;
         this.logger = new DebugLogger(RedisThrottler.class, debugEnabled);
         this.jmxBeanName = createJmxBeanName();
     }
 
     private ObjectName createJmxBeanName() {
-        String beanName = firstNonNull(
-                config.getJmxBeanName(),
-                String.format(
-                        "org.apache.logging.log4j2:type=%s,component=Appenders,name=%s,subtype=RedisThrottler",
-                        appender.getConfig().getLoggerContext().getName(),
-                        appender.getName()));
+        String beanName = config.getJmxBeanName();
+        if (beanName == null) {
+            beanName = String.format(
+                    "org.apache.logging.log4j2:type=%s,component=Appenders,name=%s,subtype=RedisThrottler",
+                    appender.getConfig().getLoggerContext().getName(),
+                    appender.getName());
+        }
         try {
             return new ObjectName(beanName);
         } catch (MalformedObjectNameException error) {

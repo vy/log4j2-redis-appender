@@ -21,11 +21,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>com.twitter</groupId>
             <artifactId>jsr166e</artifactId>
         </dependency>

@@ -1,6 +1,5 @@
 package com.vlkan.log4j2.redis.appender;
 
-import com.google.common.base.MoreObjects;
 import com.twitter.jsr166e.LongAdder;
 
 public class RedisThrottlerInternalJmxBean implements RedisThrottlerJmxBean {
@@ -95,16 +94,15 @@ public class RedisThrottlerInternalJmxBean implements RedisThrottlerJmxBean {
 
     @Override
     public String toString() {
-        return MoreObjects
-                .toStringHelper(this)
-                .add("totalEventCount", totalEventCount.sum())
-                .add("ignoredEventCount", ignoredEventCount.sum())
-                .add("eventRateLimitFailureCount", eventRateLimitFailureCount.sum())
-                .add("byteRateLimitFailureCount", byteRateLimitFailureCount.sum())
-                .add("unavailableBufferSpaceFailureCount", unavailableBufferSpaceFailureCount.sum())
-                .add("redisPushFailureCount", redisPushFailureCount.sum())
-                .add("redisPushSuccessCount", redisPushSuccessCount.sum())
-                .toString();
+        return "RedisThrottlerInternalJmxBean{" +
+                "totalEventCount=" + totalEventCount.sum() +
+                ", ignoredEventCount=" + ignoredEventCount.sum() +
+                ", eventRateLimitFailureCount=" + eventRateLimitFailureCount.sum() +
+                ", byteRateLimitFailureCount=" + byteRateLimitFailureCount.sum() +
+                ", unavailableBufferSpaceFailureCount=" + unavailableBufferSpaceFailureCount.sum() +
+                ", redisPushFailureCount=" + redisPushFailureCount.sum() +
+                ", redisPushSuccessCount=" + redisPushSuccessCount.sum() +
+                '}';
     }
 
 }
