@@ -3,8 +3,8 @@
     <Appenders>
         <RedisAppender name="REDIS"
                        key="log4j2-messages"
-                       host="localhost"
-                       port="63790"
+                       sentinelNodes="localhost:63791"
+                       sentinelMaster="mymaster"
                        password="toosecret"
                        ignoreExceptions="false"
                        debugEnabled="false">

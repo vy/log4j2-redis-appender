@@ -17,14 +17,20 @@ import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.util.Strings;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisSentinelPool;
 import redis.clients.jedis.Protocol;
 import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.util.Pool;
 
 import java.io.Serializable;
 import java.nio.charset.Charset;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.vlkan.log4j2.redis.appender.Helpers.requireArgument;
 import static java.util.Objects.requireNonNull;
+import static org.apache.logging.log4j.util.Strings.isNotBlank;
 
 @Plugin(name = "RedisAppender",
         category = Core.CATEGORY_NAME,
@@ -56,13 +62,17 @@ public class RedisAppender implements Appender {
 
     private final boolean debugEnabled;
 
+    private final String sentinelNodes;
+
+    private final String sentinelMaster;
+
     private final RedisConnectionPoolConfig poolConfig;
 
     private final DebugLogger logger;
 
     private final RedisThrottler throttler;
 
-    private volatile JedisPool jedisPool;
+    private volatile Pool<Jedis> jedisPool;
 
     private volatile State state;
 
@@ -81,6 +91,8 @@ public class RedisAppender implements Appender {
         this.socketTimeoutSeconds = builder.socketTimeoutSeconds;
         this.ignoreExceptions = builder.ignoreExceptions;
         this.debugEnabled = builder.debugEnabled;
+        this.sentinelNodes = builder.sentinelNodes;
+        this.sentinelMaster = builder.sentinelMaster;
         this.poolConfig = builder.poolConfig;
         this.logger = new DebugLogger(RedisAppender.class, debugEnabled);
         this.throttler = new RedisThrottler(builder.getThrottlerConfig(), this, ignoreExceptions, debugEnabled);
@@ -201,19 +213,35 @@ public class RedisAppender implements Appender {
         logger.debug("connecting");
         int connectionTimeoutMillis = 1_000 * connectionTimeoutSeconds;
         int socketTimeoutMillis = 1_000 * socketTimeoutSeconds;
-        jedisPool = new JedisPool(
-                poolConfig.getJedisPoolConfig(),
-                host,
-                port,
-                connectionTimeoutMillis,
-                socketTimeoutMillis,
-                password,
-                0,          // database
-                null,       // clientName
-                false,      // ssl
-                null,       // sslSocketFactory
-                null,       // sslParameters,
-                null);      // hostnameVerifier
+        boolean sentinel = isNotBlank(sentinelNodes);
+        if (sentinel) {
+            Set<String> sentinelNodesAsSet = Stream.of(sentinelNodes.split(",")).collect(Collectors.toSet());
+            jedisPool = new JedisSentinelPool(
+                    sentinelMaster,
+                    sentinelNodesAsSet,
+                    poolConfig.getJedisPoolConfig(),
+                    connectionTimeoutMillis,
+                    socketTimeoutMillis,
+                    password,
+                    0,          // database
+                    null        // clientName
+            );
+        } else {
+            jedisPool = new JedisPool(
+                    poolConfig.getJedisPoolConfig(),
+                    host,
+                    port,
+                    connectionTimeoutMillis,
+                    socketTimeoutMillis,
+                    password,
+                    0,          // database
+                    null,       // clientName
+                    false,      // ssl
+                    null,       // sslSocketFactory
+                    null,       // sslParameters,
+                    null       // hostnameVerifier
+            );
+        }
     }
 
     private void disconnect() {
@@ -295,6 +323,12 @@ public class RedisAppender implements Appender {
 
         @PluginBuilderAttribute
         private boolean debugEnabled = false;
+
+        @PluginBuilderAttribute
+        private String sentinelNodes;
+
+        @PluginBuilderAttribute
+        private String sentinelMaster;
 
         @PluginElement("RedisConnectionPoolConfig")
         private RedisConnectionPoolConfig poolConfig = RedisConnectionPoolConfig.newBuilder().build();
@@ -411,6 +445,24 @@ public class RedisAppender implements Appender {
 
         public Builder setDebugEnabled(boolean debugEnabled) {
             this.debugEnabled = debugEnabled;
+            return this;
+        }
+
+        public String getSentinelNodes() {
+            return sentinelNodes;
+        }
+
+        public Builder setSentinelNodes(String sentinelNodes) {
+            this.sentinelNodes = sentinelNodes;
+            return this;
+        }
+
+        public String getSentinelMaster() {
+            return sentinelMaster;
+        }
+
+        public Builder setSentinelMaster(String sentinelMaster) {
+            this.sentinelMaster = sentinelMaster;
             return this;
         }
 
