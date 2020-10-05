@@ -34,7 +34,7 @@ public class RedisAppenderSentinelTest {
 
     static final int REDIS_PORT = 63790;
 
-    static final int SENTINEL_PORT = 63791;
+    static final int SENTINEL_PORT = 63792;
 
     static final String MASTER_NAME = "mymaster";
 

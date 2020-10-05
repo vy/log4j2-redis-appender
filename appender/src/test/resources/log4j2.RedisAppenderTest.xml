@@ -4,8 +4,8 @@
         <RedisAppender name="REDIS"
                        key="log4j2-messages"
                        host="localhost"
-                       port="63790"
                        password="toosecret"
+                       port="63790"
                        ignoreExceptions="false"
                        debugEnabled="false">
             <PatternLayout pattern="%level %msg"/>

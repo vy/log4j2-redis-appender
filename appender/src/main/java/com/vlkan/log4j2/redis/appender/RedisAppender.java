@@ -215,7 +215,9 @@ public class RedisAppender implements Appender {
         int socketTimeoutMillis = 1_000 * socketTimeoutSeconds;
         boolean sentinel = isNotBlank(sentinelNodes);
         if (sentinel) {
-            Set<String> sentinelNodesAsSet = Stream.of(sentinelNodes.split(",")).collect(Collectors.toSet());
+            Set<String> sentinelNodesAsSet = Stream.of(sentinelNodes.split("\\s*,\\s*"))
+                    .filter(Strings::isNotBlank)
+                    .collect(Collectors.toSet());
             jedisPool = new JedisSentinelPool(
                     sentinelMaster,
                     sentinelNodesAsSet,
@@ -498,6 +500,10 @@ public class RedisAppender implements Appender {
             requireArgument(Strings.isNotBlank(key), "blank key");
             requireArgument(Strings.isNotBlank(host), "blank host");
             requireArgument(port > 0, "expecting: port > 0, found: %d", port);
+            if (sentinelNodes != null) {
+                requireArgument(Strings.isNotBlank(sentinelNodes), "blank sentinel nodes");
+                requireArgument(Strings.isNotBlank(sentinelMaster), "blank sentinel master");
+            }
             requireArgument(connectionTimeoutSeconds > 0, "expecting: connectionTimeoutSeconds > 0, found: %d", connectionTimeoutSeconds);
             requireArgument(socketTimeoutSeconds > 0, "expecting: socketTimeoutSeconds > 0, found: %d", socketTimeoutSeconds);
             requireNonNull(poolConfig, "poolConfig");
