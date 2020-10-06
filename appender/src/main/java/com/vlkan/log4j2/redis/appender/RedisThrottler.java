@@ -76,8 +76,9 @@ class RedisThrottler implements AutoCloseable {
         String beanName = config.getJmxBeanName();
         if (beanName == null) {
             LoggerContext loggerContext = appender.getConfig().getLoggerContext();
-            if (loggerContext == null)
+            if (loggerContext == null) {
                 loggerContext = (LoggerContext) LogManager.getContext(false);
+            }
             beanName = String.format(
                     "org.apache.logging.log4j2:type=%s,component=Appenders,name=%s,subtype=RedisThrottler",
                     loggerContext.getName(),

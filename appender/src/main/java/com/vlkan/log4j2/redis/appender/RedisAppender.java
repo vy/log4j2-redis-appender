@@ -24,6 +24,7 @@ import redis.clients.jedis.util.Pool;
 
 import java.io.Serializable;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -296,7 +297,7 @@ public class RedisAppender implements Appender {
         private String name;
 
         @PluginBuilderAttribute
-        private Charset charset = Charset.forName("UTF-8");
+        private Charset charset = StandardCharsets.UTF_8;
 
         @PluginElement("Layout")
         private Layout<? extends Serializable> layout = PatternLayout.newBuilder().withCharset(charset).build();

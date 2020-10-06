@@ -1,3 +1,7 @@
+### (2020-10-06) v0.8
+
+- Added Redis [Sentinel](https://redis.io/topics/sentinel) support. (#9)
+
 ### (2019-07-23) v0.7
 
 - Remove Guava dependency by copying the `RateLimiter`.

@@ -58,7 +58,10 @@ Below you can find a sample `log4j2.xml` snippet employing `RedisAppender`.
 </Configuration>
 ```
 
-If you have Sentinel cluster please configure RedisAppender like this:
+One can make `RedisAppender` work against a
+[sentinel](https://redis.io/topics/sentinel) setup using `sentinelNodes` and
+`sentinelMaster` parameters:
+
 ```xml
 <RedisAppender name="REDIS"
                key="log4j2-messages"
@@ -66,7 +69,10 @@ If you have Sentinel cluster please configure RedisAppender like this:
                sentinelMaster="mymaster">
 ...
 </RedisAppender>
-```   
+```
+
+Note that `sentinelNodes` and `sentinelMaster` have priority over `host` and
+`port` parameters.
 
 `RedisAppender` is configured with the following parameters:
 
@@ -76,8 +82,8 @@ If you have Sentinel cluster please configure RedisAppender like this:
 | `key` | String | | Redis queue key |
 | `host` | String | `localhost` | Redis host|
 | `port` | int | 6379 | Redis port |
-| `sentinelNodes` | String | `localhost:63791,localhost:63792` | Redis sentinel nodes as comma-separated list. If specified, `host` and `port` parameters are ignored. |
-| `sentinelMaster` | String | `mymaster` | Redis sentinel master name |
+| `sentinelNodes` | String | `null` | Redis sentinel nodes as comma-separated list, e.g., `host1:port1,host2:port2`. If specified, `host` and `port` parameters are ignored. |
+| `sentinelMaster` | String | `null` | Redis sentinel master name |
 | `password` | String | `null` | Redis password |
 | `connectionTimeoutSeconds` | int | 2 | initial connection timeout in seconds |
 | `socketTimeoutSeconds` | int | 2 | socket timeout in seconds |
@@ -225,7 +231,7 @@ Contributors
 
 # License
 
-Copyright &copy; 2017-2019 [Volkan Yazıcı](http://vlkan.com/)
+Copyright &copy; 2017-2020 [Volkan Yazıcı](http://vlkan.com/)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
