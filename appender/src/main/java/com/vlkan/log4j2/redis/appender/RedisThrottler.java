@@ -1,6 +1,8 @@
 package com.vlkan.log4j2.redis.appender;
 
 import com.vlkan.log4j2.redis.appender.guava.GuavaRateLimiter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.JMX;
@@ -73,9 +75,12 @@ class RedisThrottler implements AutoCloseable {
     private ObjectName createJmxBeanName() {
         String beanName = config.getJmxBeanName();
         if (beanName == null) {
+            LoggerContext loggerContext = appender.getConfig().getLoggerContext();
+            if (loggerContext == null)
+                loggerContext = (LoggerContext) LogManager.getContext(false);
             beanName = String.format(
                     "org.apache.logging.log4j2:type=%s,component=Appenders,name=%s,subtype=RedisThrottler",
-                    appender.getConfig().getLoggerContext().getName(),
+                    loggerContext.getName(),
                     appender.getName());
         }
         try {

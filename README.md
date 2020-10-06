@@ -58,6 +58,16 @@ Below you can find a sample `log4j2.xml` snippet employing `RedisAppender`.
 </Configuration>
 ```
 
+If you have Sentinel cluster please configure RedisAppender like this:
+```xml
+<RedisAppender name="REDIS"
+               key="log4j2-messages"
+               sentinelNodes="localhost:63791,localhost:63792"
+               sentinelMaster="mymaster">
+...
+</RedisAppender>
+```   
+
 `RedisAppender` is configured with the following parameters:
 
 | Parameter Name | Type | Default | Description |
@@ -66,6 +76,8 @@ Below you can find a sample `log4j2.xml` snippet employing `RedisAppender`.
 | `key` | String | | Redis queue key |
 | `host` | String | `localhost` | Redis host|
 | `port` | int | 6379 | Redis port |
+| `sentinelNodes` | String | `localhost:63791,localhost:63792` | Redis sentinel nodes as comma-separated list. If specified, `host` and `port` parameters are ignored. |
+| `sentinelMaster` | String | `mymaster` | Redis sentinel master name |
 | `password` | String | `null` | Redis password |
 | `connectionTimeoutSeconds` | int | 2 | initial connection timeout in seconds |
 | `socketTimeoutSeconds` | int | 2 | socket timeout in seconds |
@@ -209,6 +221,7 @@ Contributors
 
 - [t9t](https://github.com/t9t)
 - [Yaroslav Skopets](https://github.com/yskopets)
+- [Boris Faniuk](https://github.com/bfanyuk)
 
 # License
 

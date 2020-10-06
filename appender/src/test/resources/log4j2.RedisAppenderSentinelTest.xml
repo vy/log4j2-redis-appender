@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration name="RedisAppenderTest">
+    <Appenders>
+        <RedisAppender name="REDIS"
+                       key="log4j2-messages"
+                       sentinelNodes="localhost:63791,localhost:63792"
+                       sentinelMaster="mymaster"
+                       password="toosecret"
+                       ignoreExceptions="false"
+                       debugEnabled="false">
+            <PatternLayout pattern="%level %msg"/>
+            <RedisConnectionPoolConfig testWhileIdle="true"
+                                       minEvictableIdleTimeMillis="60000"
+                                       timeBetweenEvictionRunsMillis="30000"
+                                       numTestsPerEvictionRun="-1"/>
+            <RedisThrottlerConfig bufferSize="100"
+                                  batchSize="10"
+                                  flushPeriodMillis="500"
+                                  maxEventCountPerSecond="0"
+                                  maxByteCountPerSecond="0"/>
+        </RedisAppender>
+    </Appenders>
+    <Loggers>
+        <Root level="all">
+            <AppenderRef ref="REDIS"/>
+        </Root>
+    </Loggers>
+</Configuration>
