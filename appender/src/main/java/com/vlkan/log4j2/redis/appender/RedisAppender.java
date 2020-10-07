@@ -227,8 +227,7 @@ public class RedisAppender implements Appender {
                     socketTimeoutMillis,
                     password,
                     0,          // database
-                    null        // clientName
-            );
+                    null);      // clientName
         } else {
             jedisPool = new JedisPool(
                     poolConfig.getJedisPoolConfig(),
@@ -242,8 +241,7 @@ public class RedisAppender implements Appender {
                     false,      // ssl
                     null,       // sslSocketFactory
                     null,       // sslParameters,
-                    null       // hostnameVerifier
-            );
+                    null);     // hostnameVerifier
         }
     }
 

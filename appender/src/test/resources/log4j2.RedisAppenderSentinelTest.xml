@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration name="RedisAppenderTest">
+<Configuration name="RedisAppenderSentinelTest">
     <Appenders>
         <RedisAppender name="REDIS"
                        key="log4j2-messages"
-                       sentinelNodes="localhost:63791,localhost:63792"
+                       sentinelNodes="localhost:63791"
                        sentinelMaster="mymaster"
                        password="toosecret"
                        ignoreExceptions="false"

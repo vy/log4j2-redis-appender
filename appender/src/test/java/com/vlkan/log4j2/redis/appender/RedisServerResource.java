@@ -1,10 +1,9 @@
 package com.vlkan.log4j2.redis.appender;
 
 import org.junit.rules.ExternalResource;
-import redis.embedded.RedisExecProvider;
 import redis.embedded.RedisServer;
 
-public class RedisServerResource extends ExternalResource {
+class RedisServerResource extends ExternalResource {
 
     private final int port;
 
@@ -13,10 +12,8 @@ public class RedisServerResource extends ExternalResource {
     RedisServerResource(int port, String password) {
         this.port = port;
         try {
-            RedisExecProvider redisExecProvider = RedisExecProvider.defaultProvider();
             this.redisServer = RedisServer
                     .builder()
-                    .redisExecProvider(redisExecProvider)
                     .port(port)
                     .setting("requirepass " + password)
                     .build();

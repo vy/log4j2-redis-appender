@@ -1,22 +1,25 @@
 package com.vlkan.log4j2.redis.appender;
 
 import org.junit.rules.ExternalResource;
-import redis.embedded.RedisExecProvider;
 import redis.embedded.RedisSentinel;
 
-public class RedisSentinelResource extends ExternalResource {
+class RedisSentinelResource extends ExternalResource {
 
     private final int port;
+
+    private final int masterPort;
+
+    private final String masterName;
 
     private final RedisSentinel sentinel;
 
     RedisSentinelResource(int port, int masterPort, String masterName) {
         this.port = port;
+        this.masterPort = masterPort;
+        this.masterName = masterName;
         try {
-            RedisExecProvider redisExecProvider = RedisExecProvider.defaultProvider();
             this.sentinel = RedisSentinel
                     .builder()
-                    .redisExecProvider(redisExecProvider)
                     .port(port)
                     .masterPort(masterPort)
                     .masterName(masterName)
@@ -39,7 +42,11 @@ public class RedisSentinelResource extends ExternalResource {
 
     @Override
     public String toString() {
-        return String.format("RedisSentinelResource{port=%d}", port);
+        return "RedisSentinelResource{" +
+                "port=" + port +
+                ", masterPort=" + masterPort +
+                ", masterName='" + masterName + '\'' +
+                '}';
     }
 
 }

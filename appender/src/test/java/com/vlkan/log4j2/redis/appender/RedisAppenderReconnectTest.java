@@ -3,21 +3,26 @@ package com.vlkan.log4j2.redis.appender;
 import org.apache.logging.log4j.core.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.AppenderLoggingException;
+import org.assertj.core.api.Assertions;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import redis.embedded.RedisServer;
 
-import static com.vlkan.log4j2.redis.appender.RedisAppenderTest.*;
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class RedisAppenderReconnectTest {
 
-    private static final DebugLogger LOGGER = new DebugLogger(RedisAppenderReconnectTest.class);
+    private static final DebugLogger LOGGER =
+            new DebugLogger(RedisAppenderReconnectTest.class);
 
-    private static final RedisServerResource REDIS_SERVER_RESOURCE = new RedisServerResource(REDIS_PORT, REDIS_PASSWORD);
+    private static final RedisServerResource REDIS_SERVER_RESOURCE =
+            new RedisServerResource(
+                    RedisAppenderTestConfig.REDIS_PORT,
+                    RedisAppenderTestConfig.REDIS_PASSWORD);
 
-    private static final LoggerContextResource LOGGER_CONTEXT_RESOURCE = new LoggerContextResource(CONFIG_FILE_URI);
+    private static final LoggerContextResource LOGGER_CONTEXT_RESOURCE =
+            new LoggerContextResource(
+                    RedisAppenderTestConfig.LOG4J2_CONFIG_FILE_URI);
 
     @ClassRule
     public static final RuleChain RULE_CHAIN = RuleChain
@@ -40,9 +45,9 @@ public class RedisAppenderReconnectTest {
                 append(logger, "append should fail loudly");
                 throw new IllegalStateException("should not have reached here");
             } catch (Throwable error) {
-                assertThat(error).isInstanceOf(AppenderLoggingException.class);
-                assertThat(error.getCause()).isNotNull();
-                assertThat(error.getCause()).hasMessageContaining("Unexpected end of stream.");
+                Assertions.assertThat(error).isInstanceOf(AppenderLoggingException.class);
+                Assertions.assertThat(error.getCause()).isNotNull();
+                Assertions.assertThat(error.getCause()).hasMessageContaining("Unexpected end of stream.");
                 LOGGER.debug("starting server");
                 redisServer.start();
                 append(logger, "append should succeed again");

@@ -3,7 +3,7 @@ package com.vlkan.log4j2.redis.appender;
 import org.junit.rules.ExternalResource;
 import redis.clients.jedis.Jedis;
 
-public class RedisClientResource extends ExternalResource {
+class RedisClientResource extends ExternalResource {
 
     private final String host;
 
