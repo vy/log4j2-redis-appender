@@ -4,10 +4,9 @@
         <RedisAppender name="REDIS"
                        key="log4j2-messages"
                        sentinelNodes="localhost:63791"
-                       sentinelMaster="mymaster"
-                       password="toosecret"
-                       ignoreExceptions="false"
-                       debugEnabled="false">
+                       sentinelMaster="tango"
+                       password="milonga"
+                       ignoreExceptions="false">
             <PatternLayout pattern="%level %msg"/>
             <RedisConnectionPoolConfig testWhileIdle="true"
                                        minEvictableIdleTimeMillis="60000"

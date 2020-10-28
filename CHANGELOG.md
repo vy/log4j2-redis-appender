@@ -1,3 +1,17 @@
+### (2020-10-28) v0.9
+
+- Flush remaining events in the buffer after closing the throttler. (#12)
+
+- Switch to JUnit 5.
+
+- Replace `com.github.kstyrc:embedded-redis:0.6` with
+  `it.ozimov:embedded-redis:0.7.3`.
+
+- Refactor tests.
+
+- Deprecate `debugEnabled` flag and replace the custom logger with
+  Log4j `StatusLogger`.
+
 ### (2020-10-06) v0.8
 
 - Added Redis [Sentinel](https://redis.io/topics/sentinel) support. (#9)

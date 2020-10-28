@@ -1,44 +1,66 @@
 package com.vlkan.log4j2.redis.appender;
 
-import org.apache.logging.log4j.core.Logger;
+import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.AppenderLoggingException;
+import org.apache.logging.log4j.status.StatusLogger;
 import org.assertj.core.api.Assertions;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.RuleChain;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import redis.clients.jedis.Jedis;
 import redis.embedded.RedisServer;
-
 
 public class RedisAppenderReconnectTest {
 
-    private static final DebugLogger LOGGER =
-            new DebugLogger(RedisAppenderReconnectTest.class);
+    private static final Logger LOGGER = StatusLogger.getLogger();
 
-    private static final RedisServerResource REDIS_SERVER_RESOURCE =
-            new RedisServerResource(
+    @Order(1)
+    @RegisterExtension
+    final RedisServerExtension redisServerExtension =
+            new RedisServerExtension(
                     RedisAppenderTestConfig.REDIS_PORT,
                     RedisAppenderTestConfig.REDIS_PASSWORD);
 
-    private static final LoggerContextResource LOGGER_CONTEXT_RESOURCE =
-            new LoggerContextResource(
+    @Order(2)
+    @RegisterExtension
+    final RedisClientExtension redisClientExtension =
+            new RedisClientExtension(
+                    RedisAppenderTestConfig.REDIS_HOST,
+                    RedisAppenderTestConfig.REDIS_PORT,
+                    RedisAppenderTestConfig.REDIS_PASSWORD);
+
+    @Order(3)
+    @RegisterExtension
+    final LoggerContextExtension loggerContextExtension =
+            new LoggerContextExtension(
                     RedisAppenderTestConfig.LOG4J2_CONFIG_FILE_URI);
 
-    @ClassRule
-    public static final RuleChain RULE_CHAIN = RuleChain
-            .outerRule(REDIS_SERVER_RESOURCE)
-            .around(LOGGER_CONTEXT_RESOURCE);
-
     @Test
-    public void test_reconnect() throws InterruptedException {
-        LoggerContext loggerContext = LOGGER_CONTEXT_RESOURCE.getLoggerContext();
-        RedisServer redisServer = REDIS_SERVER_RESOURCE.getRedisServer();
+    public void append_should_work_when_server_becomes_reachable_again() throws InterruptedException {
+
+        // Create the logger.
+        LoggerContext loggerContext = loggerContextExtension.getLoggerContext();
+        Logger logger = loggerContext.getLogger(RedisAppenderReconnectTest.class.getCanonicalName());
+
+        // Try to append the 1st message.
+        String message1 = "append should succeed";
+        append(logger, message1);
+        Thread.sleep(2_000);
+
+        // Verify the persistence of the 1st message.
+        Jedis redisClient = redisClientExtension.getClient();
+        String message1Json = redisClient.rpop(RedisAppenderTestConfig.REDIS_KEY);
+        Assertions.assertThat(message1Json).contains(message1);
+
+        // Stop the server.
+        LOGGER.debug("stopping server");
+        RedisServer redisServer = redisServerExtension.getRedisServer();
+        redisServer.stop();
+
+
+
         try {
-            Logger logger = loggerContext.getLogger(RedisAppenderReconnectTest.class.getCanonicalName());
-            append(logger, "append should succeed");
-            Thread.sleep(2_000);
-            LOGGER.debug("stopping server");
-            redisServer.stop();
             try {
                 append(logger, "append should fail silently");
                 Thread.sleep(2_000);
@@ -59,7 +81,7 @@ public class RedisAppenderReconnectTest {
     }
 
     private static void append(Logger logger, String message) {
-        LOGGER.debug("trying to append: %s", message);
+        LOGGER.debug("trying to append: {}", message);
         logger.info(message);
     }
 

@@ -32,7 +32,7 @@ Below you can find a sample `log4j2.xml` snippet employing `RedisAppender`.
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration name="RedisAppenderTest">
+<Configuration>
     <Appenders>
         <RedisAppender name="REDIS"
                        key="log4j2-messages"
@@ -91,7 +91,6 @@ Note that `sentinelNodes` and `sentinelMaster` have priority over `host` and
 | `Layout` | Layout | `PatternLayout` | used to format the `LogEvent`s |
 | `RedisConnectionPoolConfig` | RedisConnectionPoolConfig | | Redis connection pool configuration |
 | `RedisThrottlerConfig` | RedisThrottlerConfig | | Redis throttler configuration |
-| `debugEnabled` | boolean | `false` | enables logging to `stderr` for debugging the plugin |
 
 ## Redis Connection Pool
 

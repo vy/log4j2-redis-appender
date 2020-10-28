@@ -11,15 +11,15 @@ enum RedisAppenderSentinelTestConfig {;
 
     static final String REDIS_HOST = "localhost";
 
-    static final String REDIS_PASSWORD = "toosecret";
+    static final String REDIS_PASSWORD = "milonga";
 
     static final int REDIS_PORT = 63790;
 
     static final int REDIS_SENTINEL_PORT = 63791;
 
-    static final String REDIS_SENTINEL_MASTER_NAME = "mymaster";
+    static final String REDIS_SENTINEL_MASTER_NAME = "tango";
 
-    static final URI LOG4J2_CONFIG_FILE_URI = TestHelpers.uri("classpath:log4j2.RedisAppenderSentinelTest.xml");
+    static final URI LOG4J2_CONFIG_FILE_URI = URI.create("classpath:log4j2.RedisAppenderSentinelTest.xml");
 
     static final String LOG4J2_APPENDER_NAME = "REDIS";
 

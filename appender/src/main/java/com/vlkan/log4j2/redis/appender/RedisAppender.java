@@ -14,6 +14,7 @@ import org.apache.logging.log4j.core.config.plugins.PluginConfiguration;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.validation.constraints.Required;
 import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.apache.logging.log4j.status.StatusLogger;
 import org.apache.logging.log4j.util.Strings;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -39,9 +40,13 @@ import static org.apache.logging.log4j.util.Strings.isNotBlank;
         printObject = true)
 public class RedisAppender implements Appender {
 
+    private static final StatusLogger LOGGER = StatusLogger.getLogger();
+
     private final Configuration config;
 
     private final String name;
+
+    private final String logPrefix;
 
     private final Layout<? extends Serializable> layout;
 
@@ -61,15 +66,11 @@ public class RedisAppender implements Appender {
 
     private final boolean ignoreExceptions;
 
-    private final boolean debugEnabled;
-
     private final String sentinelNodes;
 
     private final String sentinelMaster;
 
     private final RedisConnectionPoolConfig poolConfig;
-
-    private final DebugLogger logger;
 
     private final RedisThrottler throttler;
 
@@ -82,6 +83,7 @@ public class RedisAppender implements Appender {
     private RedisAppender(Builder builder) {
         this.config = builder.config;
         this.name = builder.name;
+        this.logPrefix = String.format("[RedisAppender{%s}]", builder.name);
         this.layout = builder.layout;
         this.key = builder.key;
         this.keyBytes = builder.key.getBytes(builder.charset);
@@ -91,12 +93,10 @@ public class RedisAppender implements Appender {
         this.connectionTimeoutSeconds = builder.connectionTimeoutSeconds;
         this.socketTimeoutSeconds = builder.socketTimeoutSeconds;
         this.ignoreExceptions = builder.ignoreExceptions;
-        this.debugEnabled = builder.debugEnabled;
         this.sentinelNodes = builder.sentinelNodes;
         this.sentinelMaster = builder.sentinelMaster;
         this.poolConfig = builder.poolConfig;
-        this.logger = new DebugLogger(RedisAppender.class, debugEnabled);
-        this.throttler = new RedisThrottler(builder.getThrottlerConfig(), this, ignoreExceptions, debugEnabled);
+        this.throttler = new RedisThrottler(builder.getThrottlerConfig(), this, ignoreExceptions);
     }
 
     public Configuration getConfig() {
@@ -134,7 +134,7 @@ public class RedisAppender implements Appender {
     }
 
     void consumeThrottledEvents(byte[]... events) {
-        logger.debug("consuming %d events", events.length);
+        LOGGER.debug("{} consuming {} events", logPrefix, events.length);
         try (Jedis jedis = jedisPool.getResource()) {
             jedis.rpush(keyBytes, events);
         }
@@ -146,8 +146,8 @@ public class RedisAppender implements Appender {
 
     @Override
     public void append(LogEvent event) {
-        logger.debug("appending: %s", event.getMessage().getFormattedMessage());
         if (State.STARTED.equals(state)) {
+            LOGGER.debug("{} appending: {}", logPrefix, event.getMessage().getFormattedMessage());
             byte[] eventBytes = layout.toByteArray(event);
             throttler.push(eventBytes);
         }
@@ -160,7 +160,7 @@ public class RedisAppender implements Appender {
 
     @Override
     public void start() {
-        logger.debug("starting");
+        LOGGER.info("{} starting", logPrefix);
         ensureInitialized();
         changeState(State.INITIALIZED, State.STARTING, State.STARTED, this::connect);
     }
@@ -172,27 +172,26 @@ public class RedisAppender implements Appender {
     }
 
     private synchronized void changeState(State initialState, State transitionState, State finalState, Runnable body) {
-        logger.debug("expecting state: %s", initialState);
+        LOGGER.trace("{} expecting state: {}", logPrefix, initialState);
         if (initialState != state) {
             String message = String.format("expecting: %s, found: %s", initialState, state);
             errorHandler.error(message);
             throw new IllegalStateException(message);
         }
-        logger.debug("transitioning state: %s", transitionState);
+        LOGGER.debug("{} transitioning state: {}", logPrefix, transitionState);
         state = transitionState;
         try {
             if (body != null) {
                 body.run();
             }
-            logger.debug("finalizing state: %s", finalState);
+            LOGGER.debug("{} finalizing state: {}", logPrefix, finalState);
             state = finalState;
         } catch (Exception error) {
             String message = String.format(
                     "state change failure (initialState=%s, transitionState=%s, finalState=%s)",
                     initialState, transitionState, finalState);
-            if (debugEnabled) {
-                logger.debug("%s: %s", message, error.getMessage());
-                error.printStackTrace();
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(logPrefix + " " + message, error);
             }
             errorHandler.error(message, error);
             throw new RuntimeException(message, error);
@@ -201,7 +200,7 @@ public class RedisAppender implements Appender {
 
     @Override
     public synchronized void stop() {
-        logger.debug("stopping");
+        LOGGER.info("{} stopping", logPrefix);
         state = State.STOPPING;
         throttler.close();
         if (jedisPool != null && !jedisPool.isClosed()) {
@@ -211,7 +210,7 @@ public class RedisAppender implements Appender {
     }
 
     private void connect() {
-        logger.debug("connecting");
+        LOGGER.debug("{} connecting", logPrefix);
         int connectionTimeoutMillis = 1_000 * connectionTimeoutSeconds;
         int socketTimeoutMillis = 1_000 * socketTimeoutSeconds;
         boolean sentinel = isNotBlank(sentinelNodes);
@@ -246,11 +245,13 @@ public class RedisAppender implements Appender {
     }
 
     private void disconnect() {
-        logger.debug("disconnecting");
+        LOGGER.debug("{} disconnecting", logPrefix);
         try {
             jedisPool.destroy();
         } catch (JedisConnectionException error) {
-            logger.debug("disconnect failure: %s", error.getMessage());
+            if (LOGGER.isWarnEnabled()) {
+                LOGGER.warn(logPrefix + " disconnect failure", error);
+            }
         } finally {
             jedisPool = null;
         }
@@ -322,6 +323,10 @@ public class RedisAppender implements Appender {
         @PluginBuilderAttribute
         private boolean ignoreExceptions = true;
 
+        /**
+         * @deprecated Use {@code log4j2.debug} property instead.
+         */
+        @Deprecated
         @PluginBuilderAttribute
         private boolean debugEnabled = false;
 
@@ -440,11 +445,14 @@ public class RedisAppender implements Appender {
             return this;
         }
 
+        @Deprecated
         public boolean isDebugEnabled() {
             return debugEnabled;
         }
 
+        @Deprecated
         public Builder setDebugEnabled(boolean debugEnabled) {
+            LOGGER.warn("Deprecated RedisAppender.Builder#setDebugEnabled() is used!");
             this.debugEnabled = debugEnabled;
             return this;
         }
@@ -520,7 +528,6 @@ public class RedisAppender implements Appender {
                     ", connectionTimeoutSeconds=" + connectionTimeoutSeconds +
                     ", socketTimeoutSeconds=" + socketTimeoutSeconds +
                     ", ignoreExceptions=" + ignoreExceptions +
-                    ", debugEnabled=" + debugEnabled +
                     '}';
         }
 
