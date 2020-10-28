@@ -67,7 +67,7 @@
         <java.version>1.8</java.version>
 
         <!-- library versions -->
-        <assertj.version>3.17.2</assertj.version>
+        <assertj.version>3.18.0</assertj.version>
         <awaitility.version>4.0.3</awaitility.version>
         <embedded-redis.version>0.7.3</embedded-redis.version>
         <jedis.version>3.3.0</jedis.version>
@@ -84,6 +84,7 @@
         <maven-shade-plugin.version>3.0.0</maven-shade-plugin.version>
         <maven-source-plugin.version>3.0.1</maven-source-plugin.version>
         <maven-surefire-plugin.version>3.0.0-M5</maven-surefire-plugin.version>
+        <versions-maven-plugin.version>2.8.1</versions-maven-plugin.version>
 
     </properties>
 
@@ -164,6 +165,15 @@
                 <version>${maven-release-plugin.version}</version>
                 <configuration>
                     <tagNameFormat>v@{project.version}</tagNameFormat>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>versions-maven-plugin</artifactId>
+                <version>${versions-maven-plugin.version}</version>
+                <configuration>
+                    <rulesUri>${project.baseUri}/maven-version-rules.xml</rulesUri>
                 </configuration>
             </plugin>
 
