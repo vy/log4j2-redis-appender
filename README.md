@@ -235,7 +235,7 @@ Contributors
 
 # License
 
-Copyright &copy; 2017-2020 [Volkan Yazıcı](http://vlkan.com/)
+Copyright &copy; 2017-2021 [Volkan Yazıcı](http://vlkan.com/)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
