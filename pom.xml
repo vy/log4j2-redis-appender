@@ -67,13 +67,13 @@
         <java.version>1.8</java.version>
 
         <!-- library versions -->
-        <assertj.version>3.18.0</assertj.version>
-        <awaitility.version>4.0.3</awaitility.version>
+        <assertj.version>3.19.0</assertj.version>
+        <awaitility.version>4.1.0</awaitility.version>
         <embedded-redis.version>0.7.3</embedded-redis.version>
-        <jedis.version>3.3.0</jedis.version>
+        <jedis.version>3.6.0</jedis.version>
         <jsr166e.version>1.1.0</jsr166e.version>
-        <junit5.version>5.7.0</junit5.version>
-        <log4j2.version>2.13.3</log4j2.version>
+        <junit5.version>5.8.0-M1</junit5.version>
+        <log4j2.version>2.14.1</log4j2.version>
         <slf4j.version>1.7.30</slf4j.version>
 
         <!-- plugin versions -->
