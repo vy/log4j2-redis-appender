@@ -47,7 +47,8 @@ Below you can find a sample `log4j2.xml` snippet employing `RedisAppender`.
                                   batchSize="100"
                                   flushPeriodMillis="1000"
                                   maxEventCountPerSecond="100"
-                                  maxByteCountPerSecond="4194304"/>
+                                  maxByteCountPerSecond="4194304"
+                                  maxErrorCountPerSecond="0.003"/>
         </RedisAppender>
     </Appenders>
     <Loggers>
@@ -141,10 +142,14 @@ attributes:
 | `flushPeriodMillis` | long | buffer flush period (defaults to 1000) |
 | `maxEventCountPerSecond` | double | allowed maximum number of events per second (defaults to 0, that is, unlimited) |
 | `maxByteCountPerSecond` | double | allowed maximum number of bytes per second (defaults to 0, that is, unlimited) |
+| `maxErrorCountPerSecond` | double | allowed maximum number of errors per second propagated (defaults to 0.003, that is, approximately once every 5 minutes) |
 | `jmxBeanName` | String | `RedisThrottlerJmxBean` name (defaults to `org.apache.logging.log4j2:type=<loggerContextName>,component=Appenders,name=<appenderName>,subtype=RedisThrottler`) |
 
 The buffer is flushed if either there are more than `batchSize` events
-queued in the buffer or the last flush was older than `flushPeriodMillis`.
+queued in the buffer, or the last flush was older than `flushPeriodMillis`.
+
+`maxErrorCountPerSecond` is there to avoid flooding logs if the application
+is suffering a shortage of memory, or the Redis server is unreachable.
 
 Fat JAR
 =======

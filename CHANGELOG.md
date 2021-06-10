@@ -1,3 +1,7 @@
+### (2021-06-10) v0.10
+
+- Add `maxErrorCountPerSecond` configuration to the throttler.
+
 ### (2020-10-28) v0.9
 
 - Flush remaining events in the buffer after closing the throttler. (#12)

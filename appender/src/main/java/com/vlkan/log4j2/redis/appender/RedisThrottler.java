@@ -54,6 +54,8 @@ class RedisThrottler implements AutoCloseable {
 
     private final GuavaRateLimiter byteRateLimiter;
 
+    private final GuavaRateLimiter errorRateLimiter;
+
     private final ObjectName jmxBeanName;
 
     private volatile boolean started = false;
@@ -75,6 +77,7 @@ class RedisThrottler implements AutoCloseable {
         this.flushTrigger = createFlushTrigger(appender.getName());
         this.eventRateLimiter = config.getMaxEventCountPerSecond() > 0 ? GuavaRateLimiter.create(config.getMaxEventCountPerSecond()) : null;
         this.byteRateLimiter = config.getMaxByteCountPerSecond() > 0 ? GuavaRateLimiter.create(config.getMaxByteCountPerSecond()) : null;
+        this.errorRateLimiter = config.getMaxErrorCountPerSecond() > 0 ? GuavaRateLimiter.create(config.getMaxErrorCountPerSecond()) : null;
         this.jmxBeanName = createJmxBeanName();
     }
 
@@ -227,11 +230,13 @@ class RedisThrottler implements AutoCloseable {
 
     @SuppressWarnings("SameParameterValue")
     private void tryThrow(String message, Throwable error) {
-        if (LOGGER.isErrorEnabled()) {
-            LOGGER.error(logPrefix + " " + message, error);
+        if (errorRateLimiter == null || errorRateLimiter.tryAcquire()) {
+            if (LOGGER.isErrorEnabled()) {
+                LOGGER.error(logPrefix + " " + message, error);
+            }
+            if (!ignoreExceptions)
+                throw new RuntimeException(error);
         }
-        if (!ignoreExceptions)
-            throw new RuntimeException(error);
     }
 
     private void tryThrow(String error) {
