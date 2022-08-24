@@ -63,7 +63,9 @@ public class RedisAppender implements Appender {
 
     private final String logPrefix;
 
-    private final Layout<? extends Serializable> layout;
+    private final Layout<?> layout;
+
+    private final int database;
 
     private final String key;
 
@@ -100,6 +102,7 @@ public class RedisAppender implements Appender {
         this.name = builder.name;
         this.logPrefix = String.format("[RedisAppender{%s}]", builder.name);
         this.layout = builder.layout;
+        this.database = builder.database;
         this.key = builder.key;
         this.keyBytes = builder.key.getBytes(builder.charset);
         this.host = builder.host;
@@ -230,7 +233,8 @@ public class RedisAppender implements Appender {
         int socketTimeoutMillis = 1_000 * socketTimeoutSeconds;
         boolean sentinel = isNotBlank(sentinelNodes);
         if (sentinel) {
-            Set<String> sentinelNodesAsSet = Stream.of(sentinelNodes.split("\\s*,\\s*"))
+            Set<String> sentinelNodesAsSet = Stream
+                    .of(sentinelNodes.split("\\s*,\\s*"))
                     .filter(Strings::isNotBlank)
                     .collect(Collectors.toSet());
             jedisPool = new JedisSentinelPool(
@@ -240,7 +244,7 @@ public class RedisAppender implements Appender {
                     connectionTimeoutMillis,
                     socketTimeoutMillis,
                     password,
-                    0,          // database
+                    database,
                     null);      // clientName
         } else {
             jedisPool = new JedisPool(
@@ -250,12 +254,12 @@ public class RedisAppender implements Appender {
                     connectionTimeoutMillis,
                     socketTimeoutMillis,
                     password,
-                    0,          // database
+                    database,
                     null,       // clientName
                     false,      // ssl
                     null,       // sslSocketFactory
                     null,       // sslParameters,
-                    null);     // hostnameVerifier
+                    null);      // hostnameVerifier
         }
     }
 
@@ -287,6 +291,7 @@ public class RedisAppender implements Appender {
         return "RedisAppender{state=" + state +
                 ", name='" + name + '\'' +
                 ", layout='" + layout + '\'' +
+                ", database=" + database +
                 ", key='" + key + '\'' +
                 ", host='" + host + '\'' +
                 ", port=" + port +
@@ -314,7 +319,10 @@ public class RedisAppender implements Appender {
         private Charset charset = StandardCharsets.UTF_8;
 
         @PluginElement("Layout")
-        private Layout<? extends Serializable> layout = PatternLayout.newBuilder().withCharset(charset).build();
+        private Layout<?> layout = PatternLayout.newBuilder().withCharset(charset).build();
+
+        @PluginBuilderAttribute
+        private int database = 0;
 
         @PluginBuilderAttribute
         @Required(message = "missing key")
@@ -388,12 +396,21 @@ public class RedisAppender implements Appender {
             return this;
         }
 
-        public Layout<? extends Serializable> getLayout() {
+        public Layout<?> getLayout() {
             return layout;
         }
 
-        public Builder setLayout(Layout<LogEvent> layout) {
+        public Builder setLayout(Layout<?> layout) {
             this.layout = layout;
+            return this;
+        }
+
+        public int getDatabase() {
+            return database;
+        }
+
+        public Builder setDatabase(int database) {
+            this.database = database;
             return this;
         }
 
@@ -519,6 +536,7 @@ public class RedisAppender implements Appender {
             requireArgument(Strings.isNotBlank(name), "blank name");
             requireNonNull(charset, "charset");
             requireNonNull(layout, "layout");
+            requireArgument(database >= 0, "expecting: database >= 0, found: %d", database);
             requireArgument(Strings.isNotBlank(key), "blank key");
             requireArgument(Strings.isNotBlank(host), "blank host");
             requireArgument(port > 0, "expecting: port > 0, found: %d", port);
@@ -537,6 +555,7 @@ public class RedisAppender implements Appender {
             return "Builder{name='" + name + '\'' +
                     ", charset=" + charset +
                     ", layout='" + layout + '\'' +
+                    ", database=" + database +
                     ", key='" + key + '\'' +
                     ", host='" + host + '\'' +
                     ", port=" + port +

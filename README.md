@@ -80,6 +80,7 @@ Note that `sentinelNodes` and `sentinelMaster` have priority over `host` and
 | Parameter Name | Type | Default | Description |
 |----------------|------|---------|-------------|
 | `charset` | String | `UTF-8` | output charset |
+| `database` | int | 0 | Redis logical database |
 | `key` | String | | Redis queue key |
 | `host` | String | `localhost` | Redis host|
 | `port` | int | 6379 | Redis port |
