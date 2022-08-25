@@ -73,8 +73,6 @@ public class RedisAppenderReconnectTest {
         RedisServer redisServer = redisServerExtension.getRedisServer();
         redisServer.stop();
 
-
-
         try {
             try {
                 append(logger, "append should fail silently");
@@ -89,10 +87,12 @@ public class RedisAppenderReconnectTest {
                 redisServer.start();
                 append(logger, "append should succeed again");
             }
+
         } finally {
             LOGGER.debug("finally stopping server");
             redisServer.stop();
         }
+
     }
 
     private static void append(Logger logger, String message) {
