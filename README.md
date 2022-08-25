@@ -1,4 +1,20 @@
-[![Actions Status](https://github.com/vy/log4j2-redis-appender/workflows/Maven/badge.svg)](https://github.com/vy/log4j2-redis-appender/actions)
+<!---
+ Copyright 2017-2022 Volkan Yazıcı
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permits and
+ limitations under the License.
+-->
+
+[![Actions Status](https://github.com/vy/log4j2-redis-appender/workflows/build/badge.svg)](https://github.com/vy/log4j2-redis-appender/actions)
 [![Maven Central](https://img.shields.io/maven-central/v/com.vlkan.log4j2/log4j2-redis-appender-parent.svg)](https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.vlkan.log4j2%22)
 [![License](https://img.shields.io/github/license/vy/log4j2-redis-appender.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
 
@@ -236,7 +252,7 @@ Contributors
 
 # License
 
-Copyright &copy; 2017-2021 [Volkan Yazıcı](http://vlkan.com/)
+Copyright &copy; 2017-2022 [Volkan Yazıcı](http://vlkan.com/)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

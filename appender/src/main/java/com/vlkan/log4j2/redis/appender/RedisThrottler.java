@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 Volkan Yazıcı
+ * Copyright 2017-2022 Volkan Yazıcı
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,7 +168,7 @@ class RedisThrottler implements AutoCloseable {
                 break;
             }
             if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("{} polled: {}", logPrefix, new String(event));
+                LOGGER.trace("{} polled: {}", logPrefix, new String(event).trim());
             }
             batch[batchIndex++] = event;
             if (batchIndex == batch.length) {

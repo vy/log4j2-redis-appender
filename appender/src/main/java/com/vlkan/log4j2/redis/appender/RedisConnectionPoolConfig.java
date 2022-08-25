@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 Volkan Yazıcı
+ * Copyright 2017-2022 Volkan Yazıcı
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.config.plugins.PluginBuilderAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginBuilderFactory;
 import redis.clients.jedis.JedisPoolConfig;
+
+import java.time.Duration;
 
 @Plugin(name = "RedisConnectionPoolConfig",
         category = Node.CATEGORY,
@@ -97,15 +99,15 @@ public class RedisConnectionPoolConfig {
         config.setMinIdle(builder.minIdle);
         config.setLifo(builder.lifo);
         config.setFairness(builder.fairness);
-        config.setMaxWaitMillis(builder.maxWaitMillis);
-        config.setMinEvictableIdleTimeMillis(builder.minEvictableIdleTimeMillis);
-        config.setSoftMinEvictableIdleTimeMillis(builder.softMinEvictableIdleTimeMillis);
+        config.setMaxWait(Duration.ofMillis(builder.maxWaitMillis));
+        config.setMinEvictableIdleTime(Duration.ofMillis(builder.minEvictableIdleTimeMillis));
+        config.setSoftMinEvictableIdleTime(Duration.ofMillis(builder.softMinEvictableIdleTimeMillis));
         config.setNumTestsPerEvictionRun(builder.numTestsPerEvictionRun);
         config.setTestOnCreate(builder.testOnCreate);
         config.setTestOnBorrow(builder.testOnBorrow);
         config.setTestOnReturn(builder.testOnReturn);
         config.setTestWhileIdle(builder.testWhileIdle);
-        config.setTimeBetweenEvictionRunsMillis(builder.timeBetweenEvictionRunsMillis);
+        config.setTimeBetweenEvictionRuns(Duration.ofMillis(builder.timeBetweenEvictionRunsMillis));
         config.setEvictionPolicyClassName(builder.evictionPolicyClassName);
         config.setBlockWhenExhausted(builder.blockWhenExhausted);
         config.setJmxEnabled(builder.jmxEnabled);

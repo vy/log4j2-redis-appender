@@ -1,11 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<!--
+ Copyright 2017-2022 Volkan Yazıcı
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permits and
+ limitations under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.vlkan.log4j2</groupId>
     <artifactId>log4j2-redis-appender-parent</artifactId>
-    <version>0.11-SNAPSHOT</version>
+    <version>${revision}</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -29,14 +46,14 @@
         <developer>
             <id>vy</id>
             <name>Volkan Yazıcı</name>
-            <email>volkan.yazici@gmail.com</email>
+            <email>volkan@yazi.ci</email>
             <organization>Volkan Yazıcı's Soap Co.</organization>
             <organizationUrl>http://vlkan.com/</organizationUrl>
             <roles>
                 <role>Project-Administrator</role>
                 <role>Developer</role>
             </roles>
-            <timezone>UTC+01:00</timezone>
+            <timezone>Europe/Amsterdam</timezone>
         </developer>
     </developers>
 
@@ -62,28 +79,30 @@
 
     <properties>
 
+        <revision>0.11.0-SNAPSHOT</revision>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.build.resourceEncoding>UTF-8</project.build.resourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <java.version>1.8</java.version>
+        <java.version>8</java.version>
 
         <!-- library versions -->
-        <assertj.version>3.19.0</assertj.version>
-        <awaitility.version>4.1.0</awaitility.version>
+        <assertj.version>3.23.1</assertj.version>
+        <awaitility.version>4.2.0</awaitility.version>
         <embedded-redis.version>0.7.3</embedded-redis.version>
-        <jedis.version>3.6.0</jedis.version>
+        <errorprone.version>2.15.0</errorprone.version>
+        <jedis.version>4.3.0-m1</jedis.version>
         <jsr166e.version>1.1.0</jsr166e.version>
-        <junit5.version>5.8.0-M1</junit5.version>
-        <log4j2.version>2.17.1</log4j2.version>
-        <slf4j.version>1.7.30</slf4j.version>
+        <junit5.version>5.9.0</junit5.version>
+        <log4j2.version>2.18.0</log4j2.version>
+        <slf4j.version>2.0.0</slf4j.version>
 
         <!-- plugin versions -->
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
-        <maven-enforcer-plugin.version>3.0.0-M3</maven-enforcer-plugin.version>
-        <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
-        <maven-javadoc-plugin.version>2.10.4</maven-javadoc-plugin.version>
-        <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
-        <maven-shade-plugin.version>3.0.0</maven-shade-plugin.version>
-        <maven-source-plugin.version>3.0.1</maven-source-plugin.version>
+        <maven-enforcer-plugin.version>3.0.0</maven-enforcer-plugin.version>
+        <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
+        <maven-javadoc-plugin.version>3.3.0</maven-javadoc-plugin.version>
+        <maven-shade-plugin.version>3.3.0</maven-shade-plugin.version>
+        <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
         <maven-surefire-plugin.version>3.0.0-M5</maven-surefire-plugin.version>
         <versions-maven-plugin.version>2.8.1</versions-maven-plugin.version>
 
@@ -155,14 +174,22 @@
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                     <showWarnings>true</showWarnings>
+                    <!-- "fork" needs be enabled to make "compilerArgs" take effect. -->
+                    <fork>true</fork>
                     <compilerArgs>
                         <arg>-Werror</arg>
                         <arg>-Xlint:all</arg>
-                        <arg>-Xlint:-deprecation</arg>
                         <arg>-Xlint:-options</arg>
                         <arg>-Xlint:-processing</arg>
                         <arg>-Xlint:-serial</arg>
                     </compilerArgs>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.apache.logging.log4j</groupId>
+                            <artifactId>log4j-core</artifactId>
+                            <version>${log4j2.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
 
@@ -191,15 +218,6 @@
             </plugin>
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>${maven-release-plugin.version}</version>
-                <configuration>
-                    <tagNameFormat>v@{project.version}</tagNameFormat>
-                </configuration>
-            </plugin>
-
-            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>versions-maven-plugin</artifactId>
                 <version>${versions-maven-plugin.version}</version>
@@ -224,9 +242,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${maven-surefire-plugin.version}</version>
                     <configuration>
-                        <argLine>-ea</argLine>
-                        <argLine>-Dlog4j2.debug=true</argLine>
-                        <argLine>-Dorg.slf4j.simpleLogger.defaultLogLevel=trace</argLine>
+                        <argLine>-ea -Dlog4j.debug -Dorg.slf4j.simpleLogger.defaultLogLevel=trace</argLine>
                     </configuration>
                 </plugin>
 

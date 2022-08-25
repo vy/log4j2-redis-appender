@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 Volkan Yazıcı
+ * Copyright 2017-2022 Volkan Yazıcı
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -346,13 +346,6 @@ public class RedisAppender implements Appender {
         @PluginBuilderAttribute
         private boolean ignoreExceptions = true;
 
-        /**
-         * @deprecated Use {@code log4j2.debug} property instead.
-         */
-        @Deprecated
-        @PluginBuilderAttribute
-        private boolean debugEnabled = false;
-
         @PluginBuilderAttribute
         private String sentinelNodes;
 
@@ -474,18 +467,6 @@ public class RedisAppender implements Appender {
 
         public Builder setIgnoreExceptions(boolean ignoreExceptions) {
             this.ignoreExceptions = ignoreExceptions;
-            return this;
-        }
-
-        @Deprecated
-        public boolean isDebugEnabled() {
-            return debugEnabled;
-        }
-
-        @Deprecated
-        public Builder setDebugEnabled(boolean debugEnabled) {
-            LOGGER.warn("Deprecated RedisAppender.Builder#setDebugEnabled() is used!");
-            this.debugEnabled = debugEnabled;
             return this;
         }
 
