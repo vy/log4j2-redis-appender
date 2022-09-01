@@ -97,6 +97,7 @@
         <slf4j.version>2.0.0</slf4j.version>
 
         <!-- plugin versions -->
+        <flatten-maven-plugin.version>1.3.</flatten-maven-plugin.version>
         <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
         <maven-enforcer-plugin.version>3.1.0</maven-enforcer-plugin.version>
         <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
@@ -226,6 +227,42 @@
                 </configuration>
             </plugin>
 
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>-ea -Dlog4j.debug -Dorg.slf4j.simpleLogger.defaultLogLevel=trace</argLine>
+                </configuration>
+            </plugin>
+
+            <!-- This plugin is required to install or deploy artifacts when using CI-friendly versions, i.e., ${revision} property.
+                 https://maven.apache.org/maven-ci-friendly.html#Install_.2F_Deploy -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <configuration>
+                    <updatePomFile>true</updatePomFile>
+                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                    <outputDirectory>${project.build.directory}</outputDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>flatten.clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
 
         <pluginManagement>
@@ -241,9 +278,12 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${maven-surefire-plugin.version}</version>
-                    <configuration>
-                        <argLine>-ea -Dlog4j.debug -Dorg.slf4j.simpleLogger.defaultLogLevel=trace</argLine>
-                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>flatten-maven-plugin</artifactId>
+                    <version>${flatten-maven-plugin.version}0</version>
                 </plugin>
 
             </plugins>
