@@ -16,6 +16,8 @@
 
 ### (????-??-??) v0.11.0
 
+- Flush remaining events in the buffer after interrupting the throttler.
+
 - Add Redis logical database support. (#16)
 
 - Switched to [semantic versioning](https://semver.org/).

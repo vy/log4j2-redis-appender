@@ -77,6 +77,14 @@ class RedisThrottler implements AutoCloseable {
 
     private volatile RedisThrottlerJmxBean jmxBean = null;
 
+    /**
+     * Index pointing to the next empty item of {@link #batch}.
+     * <p>
+     * This doesn't need to be guarded, since it is only accessed by the {@link #flushTrigger}.
+     * </p>
+     */
+    private int batchIndex = 0;
+
     private final AtomicReference<Throwable> lastThrownRef = new AtomicReference<>(null);
 
     RedisThrottler(
@@ -129,26 +137,41 @@ class RedisThrottler implements AutoCloseable {
         long waitPeriodNanos = Math.multiplyExact(1_000_000L, config.getFlushPeriodMillis());
         if (LOGGER.isInfoEnabled()) {
             String waitPeriod = String.format("%.3fs", waitPeriodNanos * 1e-9);
-            LOGGER.info("{} started (waitPeriod={})", logPrefix, waitPeriod);
+            LOGGER.info("{} background task has started (waitPeriod={})", logPrefix, waitPeriod);
         }
 
         // Flush continuously.
+        boolean interrupted = false;
         while (started) {
-            LOGGER.debug("{} flushing", logPrefix);
+            LOGGER.debug("{} background task is flushing", logPrefix);
             try {
                 flush(waitPeriodNanos);
-            } catch (InterruptedException ignored) {
-                LOGGER.debug("{} interrupted", logPrefix);
-                Thread.currentThread().interrupt();
+            }
+            // Catch the interrupted exception to avoid getting the current thread interrupted.
+            // This is needed because further Redis I/O for the leftovers in the buffer might be performed.
+            // `interrupted` flag will be restored later on.
+            catch (InterruptedException ignored) {
+                LOGGER.debug("{} background task is interrupted", logPrefix);
+                interrupted = true;
+                break;
             }
         }
 
-        // Flush one last time for any left overs in the buffer.
-        LOGGER.debug("{} flushing one last time", logPrefix);
-        try {
-            flush(waitPeriodNanos);
-        } catch (InterruptedException ignored) {
-            LOGGER.debug("{} interrupted", logPrefix);
+        // Upon graceful shutdown, flush one last time for any leftovers in the buffer.
+        if (started) {
+            LOGGER.debug("{} background task is interrupted abruptly, skipping flushing one last time", logPrefix);
+        } else {
+            LOGGER.debug("{} background task is flushing one last time", logPrefix);
+            try {
+                flush(0);
+            } catch (InterruptedException ignored) {
+                LOGGER.debug("{} last run of the background task is interrupted", logPrefix);
+                interrupted = true;
+            }
+        }
+
+        // Restore the `interrupted` flag, if necessary.
+        if (interrupted) {
             Thread.currentThread().interrupt();
         }
 
@@ -156,32 +179,44 @@ class RedisThrottler implements AutoCloseable {
 
     private void flush(long waitPeriodNanos) throws InterruptedException {
 
-        int batchIndex = 0;
-        byte[] event;
+        // If waiting on the buffer is not allowed, flush events indeed without waiting.
+        if (waitPeriodNanos <= 0) {
+            for (byte[] event; (event = buffer.poll()) != null;) {
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace("{} background task has polled: {}", logPrefix, new String(event).trim());
+                }
+                batch[batchIndex++] = event;
+                if (batchIndex == batch.length) {
+                    push(batch);
+                    batchIndex = 0;
+                }
+            }
+        }
 
-        // Flush in batches.
-        LOGGER.debug("{} polling", logPrefix);
-        while (waitPeriodNanos > 0) {
-            long pollTimeNanos = System.nanoTime();
-            event = buffer.poll(waitPeriodNanos, TimeUnit.NANOSECONDS);
-            if (event == null) {
-                break;
+        // Otherwise, wait on the buffer for events to appear.
+        else {
+            while (waitPeriodNanos > 0) {
+                long pollTimeNanos = System.nanoTime();
+                byte[] event = buffer.poll(waitPeriodNanos, TimeUnit.NANOSECONDS);
+                if (event == null) {
+                    break;
+                }
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace("{} background task has polled: {}", logPrefix, new String(event).trim());
+                }
+                batch[batchIndex++] = event;
+                if (batchIndex == batch.length) {
+                    push(batch);
+                    batchIndex = 0;
+                }
+                long pollPeriodNanos = System.nanoTime() - pollTimeNanos;
+                waitPeriodNanos -= pollPeriodNanos;
             }
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("{} polled: {}", logPrefix, new String(event).trim());
-            }
-            batch[batchIndex++] = event;
-            if (batchIndex == batch.length) {
-                push(batch);
-                batchIndex = 0;
-            }
-            long pollPeriodNanos = System.nanoTime() - pollTimeNanos;
-            waitPeriodNanos -= pollPeriodNanos;
         }
 
         // Flush the last remaining.
         if (batchIndex > 0) {
-            LOGGER.debug("{} pushing remaining {} events", logPrefix, batchIndex);
+            LOGGER.debug("{} background task is pushing last {} events that didn't fit into the batch", logPrefix, batchIndex);
             byte[][] subBatch = Arrays.copyOfRange(batch, 0, batchIndex);
             push(subBatch);
         }
@@ -191,12 +226,12 @@ class RedisThrottler implements AutoCloseable {
     private void push(final byte[][] events) {
         int eventCount = events.length;
         try {
-            LOGGER.debug("{} pushing {} events", logPrefix, eventCount);
+            LOGGER.debug("{} background task is pushing {} events", logPrefix, eventCount);
             appender.consumeThrottledEvents(events);
             jmxBean.incrementRedisPushSuccessCount(eventCount);
         } catch (Exception thrown) {
             if (LOGGER.isWarnEnabled()) {
-                LOGGER.warn("{} push failure", logPrefix, thrown);
+                LOGGER.warn("{} background task push failure", logPrefix, thrown);
                 thrown.printStackTrace();
             }
             lastThrownRef.set(thrown);
@@ -307,6 +342,12 @@ class RedisThrottler implements AutoCloseable {
             LOGGER.info("{} closing", logPrefix);
             started = false;
             flushTrigger.interrupt();
+            try {
+                flushTrigger.join();
+            } catch (InterruptedException ignored) {
+                LOGGER.debug("{} stop interrupted", logPrefix);
+                Thread.currentThread().interrupt();
+            }
             unregisterJmxBean();
         }
     }
