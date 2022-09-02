@@ -14,7 +14,7 @@
  limitations under the License.
 -->
 
-### (????-??-??) v0.11.0
+### (2022-09-02) v0.11.0
 
 - Flush remaining events in the buffer after interrupting the throttler.
 
