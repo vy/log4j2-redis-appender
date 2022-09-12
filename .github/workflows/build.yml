@@ -52,7 +52,7 @@ jobs:
             -DtrimStackTrace=false \
             verify
 
-  auto-merge:
+  merge:
 
     runs-on: ubuntu-latest
     needs: build
@@ -76,7 +76,7 @@ jobs:
   deploy:
 
     runs-on: ubuntu-latest
-    needs: auto-merge
+    needs: merge
     if: github.repository == 'vy/log4j2-redis-appender' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/'))
 
     steps:
