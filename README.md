@@ -246,9 +246,10 @@ F.A.Q.
 Contributors
 ============
 
+- [Boris Faniuk](https://github.com//bfanyuk)
+- [Khaled Bakhtiari](https://github.com/ec84b4)
 - [t9t](https://github.com/t9t)
 - [Yaroslav Skopets](https://github.com/yskopets)
-- [Boris Faniuk](https://github.com/bfanyuk)
 
 # License
 

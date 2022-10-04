@@ -75,16 +75,56 @@ class RedisAppenderTest {
             logger.log(expectedLogMessage.level, expectedLogMessage.message);
         }
 
+        // Verify the logging.
+        verifyLogging(expectedLogMessages, expectedMessageCount, expectedMessageCount);
+
+    }
+
+    @Test
+    void throttler_should_not_flush_same_content_twice() {
+
+        // Create the logger.
+        LOGGER.debug("creating the logger");
+        Logger logger = loggerContextExtension
+                .getLoggerContext()
+                .getLogger(RedisAppenderTest.class.getCanonicalName());
+
+        // Verify that batch size is greater than 1 so that we can observe a partially filled batch push.
+        Assertions.assertThat(RedisAppenderTestConfig.THROTTLER_BATCH_SIZE).isGreaterThan(1);
+
+        // Log the 1st message.
+        RedisTestMessage[] expectedLogMessages1 = RedisTestMessage.createRandomArray(1);
+        logger.log(expectedLogMessages1[0].level, expectedLogMessages1[0].message);
+
+        // Verify the 1st message persistence.
+        verifyLogging(expectedLogMessages1, 1, 1);
+
+        // Log the 1st message.
+        RedisTestMessage[] expectedLogMessages2 = RedisTestMessage.createRandomArray(1);
+        logger.log(expectedLogMessages2[0].level, expectedLogMessages2[0].message);
+
+        // Verify the 1st message persistence.
+        verifyLogging(expectedLogMessages2, 2, 2);
+
+    }
+
+    private void verifyLogging(
+            RedisTestMessage[] expectedLogMessages,
+            int expectedTotalEventCount,
+            int expectedRedisPushSuccessCount) {
+
         // Verify the amount of persisted messages.
         Jedis jedis = redisClientExtension.getClient();
         LOGGER.debug("waiting for the logged messages to be persisted");
+        int expectedMessageCount = expectedLogMessages.length;
         Awaitility
                 .await()
                 .pollDelay(Duration.ofMillis(100))
                 .atMost(Duration.ofSeconds(10))
                 .until(() -> {
                     long persistedMessageCount = jedis.llen(RedisAppenderTestConfig.REDIS_KEY);
-                    return persistedMessageCount == expectedLogMessages.length;
+                    Assertions.assertThat(persistedMessageCount).isLessThanOrEqualTo(expectedMessageCount);
+                    return persistedMessageCount == expectedMessageCount;
                 });
 
         // Verify the content of persisted messages.
@@ -115,12 +155,12 @@ class RedisAppenderTest {
                 .getAppender(RedisAppenderTestConfig.LOG4J2_APPENDER_NAME);
         Assertions.assertThat(appender).isInstanceOf(RedisAppender.class);
         RedisThrottlerJmxBean jmxBean = ((RedisAppender) appender).getJmxBean();
-        Assertions.assertThat(jmxBean.getTotalEventCount()).isEqualTo(expectedMessageCount);
+        Assertions.assertThat(jmxBean.getTotalEventCount()).isEqualTo(expectedTotalEventCount);
         Assertions.assertThat(jmxBean.getIgnoredEventCount()).isEqualTo(0);
         Assertions.assertThat(jmxBean.getEventRateLimitFailureCount()).isEqualTo(0);
         Assertions.assertThat(jmxBean.getByteRateLimitFailureCount()).isEqualTo(0);
         Assertions.assertThat(jmxBean.getUnavailableBufferSpaceFailureCount()).isEqualTo(0);
-        Assertions.assertThat(jmxBean.getRedisPushSuccessCount()).isEqualTo(expectedMessageCount);
+        Assertions.assertThat(jmxBean.getRedisPushSuccessCount()).isEqualTo(expectedRedisPushSuccessCount);
         Assertions.assertThat(jmxBean.getRedisPushFailureCount()).isEqualTo(0);
 
     }
