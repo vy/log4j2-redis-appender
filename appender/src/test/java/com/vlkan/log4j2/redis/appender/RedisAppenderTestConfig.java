@@ -34,4 +34,6 @@ enum RedisAppenderTestConfig {;
 
     static final String LOG4J2_APPENDER_NAME = "REDIS";
 
+    static final int THROTTLER_BATCH_SIZE = 10;
+
 }

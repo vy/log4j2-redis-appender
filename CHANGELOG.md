@@ -14,6 +14,10 @@
  limitations under the License.
 -->
 
+### (2022-10-04) v0.11.1
+
+- Earlier throttler fix has introduced a bug. The buffer cursor is not reset correctly and caused duplicates in logged events. (Thanks to [Khaled Bakhtiari](https://github.com/ec84b4) for the report.)
+
 ### (2022-09-02) v0.11.0
 
 - Flush remaining events in the buffer after interrupting the throttler.

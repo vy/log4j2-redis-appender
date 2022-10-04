@@ -219,6 +219,7 @@ class RedisThrottler implements AutoCloseable {
             LOGGER.debug("{} background task is pushing last {} events that didn't fit into the batch", logPrefix, batchIndex);
             byte[][] subBatch = Arrays.copyOfRange(batch, 0, batchIndex);
             push(subBatch);
+            batchIndex = 0;
         }
 
     }
