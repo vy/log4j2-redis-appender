@@ -99,11 +99,11 @@ class RedisAppenderTest {
         // Verify the 1st message persistence.
         verifyLogging(expectedLogMessages1, 1, 1);
 
-        // Log the 1st message.
+        // Log the 2nd message.
         RedisTestMessage[] expectedLogMessages2 = RedisTestMessage.createRandomArray(1);
         logger.log(expectedLogMessages2[0].level, expectedLogMessages2[0].message);
 
-        // Verify the 1st message persistence.
+        // Verify the 2nd message persistence.
         verifyLogging(expectedLogMessages2, 2, 2);
 
     }
