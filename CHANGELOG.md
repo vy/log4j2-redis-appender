@@ -14,6 +14,10 @@
  limitations under the License.
 -->
 
+### (????-??-??) v0.12.0
+
+- Replaced hardcoded Guava rate limiter with Resilience4j. (#23)
+
 ### (2022-10-04) v0.11.1
 
 - Earlier throttler fix has introduced a bug. The buffer cursor is not reset correctly and caused duplicates in logged events. (Thanks to [Khaled Bakhtiari](https://github.com/ec84b4) for the report.)

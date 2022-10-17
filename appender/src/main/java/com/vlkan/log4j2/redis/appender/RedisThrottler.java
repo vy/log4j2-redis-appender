@@ -15,7 +15,6 @@
  */
 package com.vlkan.log4j2.redis.appender;
 
-import com.vlkan.log4j2.redis.appender.guava.GuavaRateLimiter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.status.StatusLogger;
@@ -65,11 +64,11 @@ class RedisThrottler implements AutoCloseable {
 
     private final Thread flushTrigger;
 
-    private final GuavaRateLimiter eventRateLimiter;
+    private final RateLimiter eventRateLimiter;
 
-    private final GuavaRateLimiter byteRateLimiter;
+    private final RateLimiter byteRateLimiter;
 
-    private final GuavaRateLimiter errorRateLimiter;
+    private final RateLimiter errorRateLimiter;
 
     private final ObjectName jmxBeanName;
 
@@ -98,9 +97,21 @@ class RedisThrottler implements AutoCloseable {
         this.buffer = new ArrayBlockingQueue<>(config.getBufferSize());
         this.batch = new byte[config.getBatchSize()][];
         this.flushTrigger = createFlushTrigger(appender.getName());
-        this.eventRateLimiter = config.getMaxEventCountPerSecond() > 0 ? GuavaRateLimiter.create(config.getMaxEventCountPerSecond()) : null;
-        this.byteRateLimiter = config.getMaxByteCountPerSecond() > 0 ? GuavaRateLimiter.create(config.getMaxByteCountPerSecond()) : null;
-        this.errorRateLimiter = config.getMaxErrorCountPerSecond() > 0 ? GuavaRateLimiter.create(config.getMaxErrorCountPerSecond()) : null;
+        this.eventRateLimiter = config.getMaxEventCountPerSecond() > 0
+                ? RateLimiter.ofMaxPermitCountPerSecond(
+                        appender.getName() + "-EventRateLimiter",
+                        config.getMaxEventCountPerSecond())
+                : null;
+        this.byteRateLimiter = config.getMaxByteCountPerSecond() > 0
+                ? RateLimiter.ofMaxPermitCountPerSecond(
+                        appender.getName()  + "-ByteRateLimiter",
+                        config.getMaxByteCountPerSecond())
+                : null;
+        this.errorRateLimiter = config.getMaxErrorCountPerSecond() > 0
+                ? RateLimiter.ofMaxPermitCountPerSecond(
+                        appender.getName()  + "-ErrorRateLimiter",
+                        config.getMaxErrorCountPerSecond())
+                : null;
         this.jmxBeanName = createJmxBeanName();
     }
 

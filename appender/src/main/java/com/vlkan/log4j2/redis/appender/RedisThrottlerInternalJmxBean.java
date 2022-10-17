@@ -15,7 +15,7 @@
  */
 package com.vlkan.log4j2.redis.appender;
 
-import com.twitter.jsr166e.LongAdder;
+import java.util.concurrent.atomic.LongAdder;
 
 public class RedisThrottlerInternalJmxBean implements RedisThrottlerJmxBean {
 

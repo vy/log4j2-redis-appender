@@ -40,6 +40,11 @@
                 </executions>
                 <configuration>
                     <createDependencyReducedPom>false</createDependencyReducedPom>
+                    <artifactSet>
+                        <excludes>
+                            <exclude>org.slf4j:slf4j-api</exclude>
+                        </excludes>
+                    </artifactSet>
                     <relocations>
                         <relocation>
                             <pattern>redis</pattern>
@@ -47,11 +52,23 @@
                         </relocation>
                         <relocation>
                             <pattern>org.apache.commons.pool2</pattern>
-                            <shadedPattern>${project.groupId}.redis.appender.commons.pool2</shadedPattern>
+                            <shadedPattern>${project.groupId}.redis.appender.org_apache_commons_pool2</shadedPattern>
                         </relocation>
                         <relocation>
-                            <pattern>com.twitter</pattern>
-                            <shadedPattern>${project.groupId}.redis.appender.twitter</shadedPattern>
+                            <pattern>io.github.resilience4j</pattern>
+                            <shadedPattern>${project.groupId}.redis.appender.io_github_resilience4j</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>io.vavr</pattern>
+                            <shadedPattern>${project.groupId}.redis.appender.io_vavr</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>com.google.gson</pattern>
+                            <shadedPattern>${project.groupId}.redis.appender.com_google_gson</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>org.json</pattern>
+                            <shadedPattern>${project.groupId}.redis.appender.org_json</shadedPattern>
                         </relocation>
                     </relocations>
                     <transformers>
