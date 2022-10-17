@@ -88,7 +88,7 @@
         <!-- library versions -->
         <assertj.version>3.23.1</assertj.version>
         <awaitility.version>4.2.0</awaitility.version>
-        <embedded-redis.version>0.7.3</embedded-redis.version>
+        <embedded-redis.version>0.8.3</embedded-redis.version>
         <errorprone.version>2.15.0</errorprone.version>
         <jedis.version>4.3.0-m2</jedis.version>
         <jedis.version>4.3.0</jedis.version>
@@ -132,7 +132,7 @@
             </dependency>
 
             <dependency>
-                <groupId>it.ozimov</groupId>
+                <groupId>org.signal</groupId>
                 <artifactId>embedded-redis</artifactId>
                 <version>${embedded-redis.version}</version>
             </dependency>

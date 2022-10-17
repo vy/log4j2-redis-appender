@@ -16,6 +16,8 @@
 
 ### (????-??-??) v0.12.0
 
+- Replaced `it.ozimov:embedded-redis` with `org.signal:embedded-redis`. (#22)
+
 - Replaced hardcoded Guava rate limiter with Resilience4j. (#23)
 
 ### (2022-10-04) v0.11.1
