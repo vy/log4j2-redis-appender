@@ -90,7 +90,7 @@
         <awaitility.version>4.2.0</awaitility.version>
         <embedded-redis.version>0.8.3</embedded-redis.version>
         <errorprone.version>2.15.0</errorprone.version>
-        <jedis.version>4.3.0</jedis.version>
+        <jedis.version>4.3.1</jedis.version>
         <jedis.version>4.3.0</jedis.version>
         <junit5.version>5.9.1</junit5.version>
         <log4j2.version>2.19.0</log4j2.version>
