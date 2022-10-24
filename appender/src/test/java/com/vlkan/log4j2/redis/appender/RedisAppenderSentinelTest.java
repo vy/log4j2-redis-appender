@@ -31,40 +31,57 @@ import static com.vlkan.log4j2.redis.appender.RedisTestConstants.RANDOM;
 
 public class RedisAppenderSentinelTest {
 
+    private static final String CLASS_NAME = RedisAppenderSentinelTest.class.getSimpleName();
+
     private static final Logger LOGGER = StatusLogger.getLogger();
 
     private static final int MIN_MESSAGE_COUNT = 1;
 
     private static final int MAX_MESSAGE_COUNT = 10;
 
+    private final String redisHost = NetworkUtils.localHostName();
+
+    private final int redisPort = NetworkUtils.findUnusedPort(redisHost);
+
+    private final int redisSentinelPort = NetworkUtils.findUnusedPort(redisHost);
+
+    private final String redisSentinelMasterName = String.format("%s-RedisSentinelMasterName-%s:%d", CLASS_NAME, redisHost, redisPort);
+
+    private final String redisPassword = String.format("%s-RedisPassword-%s:%d", CLASS_NAME, redisHost, redisPort);
+
+    private final String redisKey = String.format("%s-RedisKey-%s:%d", CLASS_NAME, redisHost, redisPort);
+
+    private final String redisAppenderName = String.format("%s-RedisAppender-%s-%d", CLASS_NAME, redisHost, redisPort);
+
     @Order(1)
     @RegisterExtension
-    final RedisServerExtension redisServerExtension =
-            new RedisServerExtension(
-                    RedisAppenderSentinelTestConfig.REDIS_PORT,
-                    RedisAppenderSentinelTestConfig.REDIS_PASSWORD);
+    final RedisServerExtension redisServerExtension = new RedisServerExtension(redisPort, redisPassword);
 
     @Order(2)
     @RegisterExtension
     final RedisSentinelExtension redisSentinelExtension =
-            new RedisSentinelExtension(
-                    RedisAppenderSentinelTestConfig.REDIS_SENTINEL_PORT,
-                    RedisAppenderSentinelTestConfig.REDIS_PORT,
-                    RedisAppenderSentinelTestConfig.REDIS_SENTINEL_MASTER_NAME);
+            new RedisSentinelExtension(redisSentinelPort, redisPort, redisSentinelMasterName);
 
     @Order(3)
     @RegisterExtension
-    final RedisClientExtension redisClientExtension =
-            new RedisClientExtension(
-                    RedisAppenderSentinelTestConfig.REDIS_HOST,
-                    RedisAppenderSentinelTestConfig.REDIS_PORT,
-                    RedisAppenderSentinelTestConfig.REDIS_PASSWORD);
+    final RedisClientExtension redisClientExtension = new RedisClientExtension(redisHost, redisPort, redisPassword);
 
     @Order(4)
     @RegisterExtension
     final LoggerContextExtension loggerContextExtension =
             new LoggerContextExtension(
-                    RedisAppenderSentinelTestConfig.LOG4J2_CONFIG_FILE_URI);
+                    CLASS_NAME,
+                    redisAppenderName,
+                    configBuilder -> configBuilder.add(configBuilder
+                            .newAppender(redisAppenderName, "RedisAppender")
+                            .addAttribute("sentinelNodes", redisHost + ":" + redisSentinelPort)
+                            .addAttribute("sentinelMaster", redisSentinelMasterName)
+                            .addAttribute("password", redisPassword)
+                            .addAttribute("key", redisKey)
+                            .addAttribute("ignoreExceptions", false)
+                            .add(configBuilder
+                                    .newLayout("PatternLayout")
+                                    .addAttribute("pattern", "%level %msg"))));
 
     @Test
     void appended_messages_should_be_persisted() {
@@ -91,7 +108,7 @@ public class RedisAppenderSentinelTest {
                 .pollDelay(Duration.ofMillis(100))
                 .atMost(Duration.ofSeconds(10))
                 .until(() -> {
-                    Long persistedMessageCount = jedis.llen(RedisAppenderTestConfig.REDIS_KEY);
+                    long persistedMessageCount = jedis.llen(redisKey);
                     return persistedMessageCount == expectedLogMessages.length;
                 });
 
@@ -104,8 +121,7 @@ public class RedisAppenderSentinelTest {
                     "%s %s",
                     expectedLogMessage.level,
                     expectedLogMessage.message);
-            String actualSerializedMessage =
-                    redisClient.lpop(RedisAppenderSentinelTestConfig.REDIS_KEY);
+            String actualSerializedMessage = redisClient.lpop(redisKey);
             try {
                 Assertions
                         .assertThat(actualSerializedMessage)
@@ -121,9 +137,8 @@ public class RedisAppenderSentinelTest {
 
         // Verify the throttler counters.
         Appender appender = loggerContextExtension
-                .getLoggerContext()
-                .getConfiguration()
-                .getAppender(RedisAppenderSentinelTestConfig.LOG4J2_APPENDER_NAME);
+                .getConfig()
+                .getAppender(redisAppenderName);
         Assertions.assertThat(appender).isInstanceOf(RedisAppender.class);
         RedisThrottlerJmxBean jmxBean = ((RedisAppender) appender).getJmxBean();
         Assertions.assertThat(jmxBean.getTotalEventCount()).isEqualTo(expectedMessageCount);

@@ -15,48 +15,102 @@
  */
 package com.vlkan.log4j2.redis.appender;
 
-import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilder;
+import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilderFactory;
+import org.apache.logging.log4j.core.config.builder.impl.BuiltConfiguration;
 import org.apache.logging.log4j.status.StatusLogger;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-import java.net.URI;
+import java.util.function.Consumer;
 
 class LoggerContextExtension implements BeforeEachCallback, AfterEachCallback {
 
     private static final Logger LOGGER = StatusLogger.getLogger();
 
-    private final URI configFileUri;
+    private static final String LOGGER_PREFIX = String.format("[%s]", LoggerContextExtension.class.getSimpleName());
 
-    private LoggerContext loggerContext;
+    private final Configuration config;
 
-    LoggerContextExtension(URI configFileUri) {
-        this.configFileUri = configFileUri;
+    private final LoggerContext loggerContext;
+
+    LoggerContextExtension(
+            String prefix,
+            String rootAppenderName,
+            Consumer<ConfigurationBuilder<BuiltConfiguration>> configCustomizer) {
+        this.config = createConfig(prefix, rootAppenderName, configCustomizer);
+        this.loggerContext = createLoggerContext(prefix);
     }
 
-    synchronized LoggerContext getLoggerContext() {
+    private static Configuration createConfig(
+            String prefix,
+            String rootAppenderName,
+            Consumer<ConfigurationBuilder<BuiltConfiguration>> configCustomizer) {
+
+        // Create the configuration builder.
+        String configName = String.format("%s-Config", prefix);
+        ConfigurationBuilder<BuiltConfiguration> configBuilder = ConfigurationBuilderFactory
+                .newConfigurationBuilder()
+                .setStatusLevel(Level.ALL)
+                .setConfigurationName(configName);
+
+        // Create the configuration.
+        configCustomizer.accept(configBuilder);
+
+        // Set the root logger.
+        configBuilder.add(configBuilder
+                .newRootLogger(Level.ALL)
+                .add(configBuilder.newAppenderRef(rootAppenderName)));
+
+        // Create the configuration.
+        return configBuilder.build(false);
+
+    }
+
+    private static LoggerContext createLoggerContext(String prefix) {
+        String name = String.format("%s-LoggerContext", prefix);
+        return new LoggerContext(name);
+    }
+
+    Configuration getConfig() {
+        return config;
+    }
+
+    LoggerContext getLoggerContext() {
         return loggerContext;
     }
 
     @Override
     public synchronized void beforeEach(ExtensionContext ignored) {
-        LOGGER.debug("starting logger context (configFileUri='{}')", configFileUri);
-        loggerContext = (LoggerContext) LogManager.getContext(
-                ClassLoader.getSystemClassLoader(), false, configFileUri);
+
+        // Setting the logger context here rather than while creating the `LoggerContext` instance, since it implicitly triggers a configuration initialization.
+        LOGGER.debug("{} setting the logger context configuration", LOGGER_PREFIX);
+        loggerContext.reconfigure(config);
+
+        // Mark the start.
+        LOGGER.debug("{} started", LOGGER_PREFIX);
+
     }
 
     @Override
     public synchronized void afterEach(ExtensionContext ignored) {
-        LOGGER.debug("stopping logger context (configFileUri='{}')", configFileUri);
-        loggerContext.stop();
-    }
 
-    @Override
-    public String toString() {
-        return String.format("LoggerContextExtension{configFileUri='%s'}", configFileUri);
+        // Stop the logger context.
+        LOGGER.debug("{} stopping the logger context", LOGGER_PREFIX);
+        loggerContext.stop();
+
+        // Stop the configuration.
+        LOGGER.debug("{} stopping the configuration", LOGGER_PREFIX);
+        config.stop();
+
+        // Mark the completion.
+        LOGGER.debug("{} stopped", LOGGER_PREFIX);
+
     }
 
 }

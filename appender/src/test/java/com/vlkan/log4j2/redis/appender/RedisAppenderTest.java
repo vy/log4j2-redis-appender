@@ -33,30 +33,52 @@ class RedisAppenderTest {
 
     private static final Logger LOGGER = StatusLogger.getLogger();
 
-    private static final int MIN_MESSAGE_COUNT = 1;
+    private static final String CLASS_NAME = RedisAppenderTest.class.getSimpleName();
 
-    private static final int MAX_MESSAGE_COUNT = 100;
+    private static final String LOGGER_PREFIX = "[" + CLASS_NAME + "]";
+
+    private final String redisHost = NetworkUtils.localHostName();
+
+    private final int redisPort = NetworkUtils.findUnusedPort(redisHost);
+
+    private final String redisPassword = String.format("%s-RedisPassword-%s:%d", CLASS_NAME, redisHost, redisPort);
+
+    private final String redisKey = String.format("%s-RedisKey-%s:%d", CLASS_NAME, redisHost, redisPort);
+
+    private final String redisAppenderName = String.format("%s-RedisAppender-%s-%d", CLASS_NAME, redisHost, redisPort);
 
     @Order(1)
     @RegisterExtension
-    final RedisServerExtension redisServerExtension =
-            new RedisServerExtension(
-                    RedisAppenderTestConfig.REDIS_PORT,
-                    RedisAppenderTestConfig.REDIS_PASSWORD);
+    final RedisServerExtension redisServerExtension = new RedisServerExtension(redisPort, redisPassword);
 
     @Order(2)
     @RegisterExtension
-    final RedisClientExtension redisClientExtension =
-            new RedisClientExtension(
-                    RedisAppenderTestConfig.REDIS_HOST,
-                    RedisAppenderTestConfig.REDIS_PORT,
-                    RedisAppenderTestConfig.REDIS_PASSWORD);
+    final RedisClientExtension redisClientExtension = new RedisClientExtension(redisHost, redisPort, redisPassword);
 
     @Order(3)
     @RegisterExtension
     final LoggerContextExtension loggerContextExtension =
             new LoggerContextExtension(
-                    RedisAppenderTestConfig.LOG4J2_CONFIG_FILE_URI);
+                    CLASS_NAME,
+                    redisAppenderName,
+                    configBuilder -> configBuilder.add(configBuilder
+                            .newAppender(redisAppenderName, "RedisAppender")
+                            .addAttribute("host", redisHost)
+                            .addAttribute("port", redisPort)
+                            .addAttribute("password", redisPassword)
+                            .addAttribute("key", redisKey)
+                            .addAttribute("ignoreExceptions", false)
+                            .add(configBuilder
+                                    .newLayout("PatternLayout")
+                                    .addAttribute("pattern", "%level %m"))
+                            .addComponent(configBuilder
+                                    .newComponent("RedisThrottlerConfig")
+                                    // Batch size needs to be greater than 1, so that we can observe a partially filled batch push.
+                                    .addAttribute("batchSize", 10)
+                                    .addAttribute("bufferSize", 100)
+                                    .addAttribute("flushPeriodMillis", 500L)
+                                    .addAttribute("maxEventCountPerSecond", 0)
+                                    .addAttribute("maxByteCountPerSecond", 0))));
 
     @Test
     void appended_messages_should_be_persisted() {
@@ -68,8 +90,10 @@ class RedisAppenderTest {
                 .getLogger(RedisAppenderTest.class.getCanonicalName());
 
         // Create and log the messages.
-        int expectedMessageCount = MIN_MESSAGE_COUNT + RANDOM.nextInt(MAX_MESSAGE_COUNT - MIN_MESSAGE_COUNT);
-        LOGGER.debug("logging {} messages", expectedMessageCount);
+        int minMessageCount = 1;
+        int maxMessageCount = 100;
+        int expectedMessageCount = minMessageCount + RANDOM.nextInt(maxMessageCount - minMessageCount);
+        LOGGER.debug("{} logging {} messages", LOGGER_PREFIX, expectedMessageCount);
         RedisTestMessage[] expectedLogMessages = RedisTestMessage.createRandomArray(expectedMessageCount);
         for (RedisTestMessage expectedLogMessage : expectedLogMessages) {
             logger.log(expectedLogMessage.level, expectedLogMessage.message);
@@ -84,13 +108,10 @@ class RedisAppenderTest {
     void throttler_should_not_flush_same_content_twice() {
 
         // Create the logger.
-        LOGGER.debug("creating the logger");
+        LOGGER.debug("{} creating the logger", LOGGER_PREFIX);
         Logger logger = loggerContextExtension
                 .getLoggerContext()
-                .getLogger(RedisAppenderTest.class.getCanonicalName());
-
-        // Verify that batch size is greater than 1 so that we can observe a partially filled batch push.
-        Assertions.assertThat(RedisAppenderTestConfig.THROTTLER_BATCH_SIZE).isGreaterThan(1);
+                .getLogger(RedisAppenderTest.class);
 
         // Log the 1st message.
         RedisTestMessage[] expectedLogMessages1 = RedisTestMessage.createRandomArray(1);
@@ -115,20 +136,20 @@ class RedisAppenderTest {
 
         // Verify the amount of persisted messages.
         Jedis jedis = redisClientExtension.getClient();
-        LOGGER.debug("waiting for the logged messages to be persisted");
+        LOGGER.debug("{} waiting for the logged messages to be persisted", LOGGER_PREFIX);
         int expectedMessageCount = expectedLogMessages.length;
         Awaitility
                 .await()
                 .pollDelay(Duration.ofMillis(100))
                 .atMost(Duration.ofSeconds(10))
                 .until(() -> {
-                    long persistedMessageCount = jedis.llen(RedisAppenderTestConfig.REDIS_KEY);
+                    long persistedMessageCount = jedis.llen(redisKey);
                     Assertions.assertThat(persistedMessageCount).isLessThanOrEqualTo(expectedMessageCount);
                     return persistedMessageCount == expectedMessageCount;
                 });
 
         // Verify the content of persisted messages.
-        LOGGER.debug("verifying the content of persisted messages");
+        LOGGER.debug("{} verifying the content of persisted messages", LOGGER_PREFIX);
         Jedis redisClient = redisClientExtension.getClient();
         for (int messageIndex = 0; messageIndex < expectedMessageCount; messageIndex++) {
             RedisTestMessage expectedLogMessage = expectedLogMessages[messageIndex];
@@ -136,7 +157,7 @@ class RedisAppenderTest {
                     "%s %s",
                     expectedLogMessage.level,
                     expectedLogMessage.message);
-            String actualSerializedMessage = redisClient.lpop(RedisAppenderTestConfig.REDIS_KEY);
+            String actualSerializedMessage = redisClient.lpop(redisKey);
             try {
                 Assertions.assertThat(actualSerializedMessage).isEqualTo(expectedSerializedMessage);
             } catch (AssertionError error) {
@@ -150,9 +171,8 @@ class RedisAppenderTest {
 
         // Verify the throttler counters.
         Appender appender = loggerContextExtension
-                .getLoggerContext()
-                .getConfiguration()
-                .getAppender(RedisAppenderTestConfig.LOG4J2_APPENDER_NAME);
+                .getConfig()
+                .getAppender(redisAppenderName);
         Assertions.assertThat(appender).isInstanceOf(RedisAppender.class);
         RedisThrottlerJmxBean jmxBean = ((RedisAppender) appender).getJmxBean();
         Assertions.assertThat(jmxBean.getTotalEventCount()).isEqualTo(expectedTotalEventCount);

@@ -20,76 +20,88 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.AppenderLoggingException;
 import org.apache.logging.log4j.status.StatusLogger;
 import org.assertj.core.api.Assertions;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import redis.clients.jedis.Jedis;
 import redis.embedded.RedisServer;
 
-public class RedisAppenderReconnectTest {
+import java.time.Duration;
+
+class RedisAppenderReconnectTest {
 
     private static final Logger LOGGER = StatusLogger.getLogger();
 
-    private static final String LOGGER_PREFIX = "[" + RedisAppenderReconnectTest.class.getSimpleName() + "]";
+    private static final String CLASS_NAME = RedisAppenderReconnectTest.class.getSimpleName();
+
+    private static final String LOGGER_PREFIX = "[" + CLASS_NAME + "]";
+
+    private final String redisHost = NetworkUtils.localHostName();
+
+    private final int redisPort = NetworkUtils.findUnusedPort(redisHost);
+
+    private final String redisPassword = String.format("%s-RedisPassword-%s:%d", CLASS_NAME, redisHost, redisPort);
+
+    private final String redisKey = String.format("%s-RedisKey-%s:%d", CLASS_NAME, redisHost, redisPort);
+
+    private final String redisAppenderName = String.format("%s-RedisAppender-%s-%d", CLASS_NAME, redisHost, redisPort);
 
     @Order(1)
     @RegisterExtension
-    final RedisServerExtension redisServerExtension =
-            new RedisServerExtension(
-                    RedisAppenderReconnectTestConfig.REDIS_PORT,
-                    RedisAppenderReconnectTestConfig.REDIS_PASSWORD);
+    final RedisServerExtension redisServerExtension = new RedisServerExtension(redisPort, redisPassword);
 
     @Order(2)
     @RegisterExtension
-    final RedisClientExtension redisClientExtension =
-            new RedisClientExtension(
-                    RedisAppenderReconnectTestConfig.REDIS_HOST,
-                    RedisAppenderReconnectTestConfig.REDIS_PORT,
-                    RedisAppenderReconnectTestConfig.REDIS_PASSWORD);
+    final RedisClientExtension redisClientExtension = new RedisClientExtension(redisHost, redisPort, redisPassword);
 
     @Order(3)
     @RegisterExtension
     final LoggerContextExtension loggerContextExtension =
             new LoggerContextExtension(
-                    RedisAppenderReconnectTestConfig.LOG4J2_CONFIG_FILE_URI);
+                    CLASS_NAME,
+                    redisAppenderName,
+                    configBuilder -> configBuilder.add(configBuilder
+                            .newAppender(redisAppenderName, "RedisAppender")
+                            .addAttribute("host", redisHost)
+                            .addAttribute("port", redisPort)
+                            .addAttribute("password", redisPassword)
+                            .addAttribute("key", redisKey)
+                            .addAttribute("ignoreExceptions", false)
+                            .add(configBuilder
+                                    .newLayout("PatternLayout")
+                                    .addAttribute("pattern", "%m"))
+                            .addComponent(configBuilder
+                                    .newComponent("RedisThrottlerConfig")
+                                    // This test needs a `flushPeriodMillis` long enough that it won't kick in during the lifetime of the test.
+                                    .addAttribute("flushPeriodMillis", 60_000L)
+                                    // This test needs a `batchSize` of 1, so that each append operation will trigger a flush.
+                                    .addAttribute("batchSize", 1))));
 
     @Test
-    public void append_should_work_when_server_becomes_reachable_again() throws InterruptedException {
-
-        // Verify the buffer size.
-        Assertions
-                .assertThat(RedisAppenderReconnectTestConfig.BATCH_SIZE)
-                .as("This test needs a `batchSize` of 1, so that each append operation will trigger a flush.")
-                .isEqualTo(1);
-
-        // Verify the flush period.
-        Assertions
-                .assertThat(RedisAppenderReconnectTestConfig.FLUSH_PERIOD_MILLIS)
-                .as("This test needs a `flushPeriodMillis` long enough that it won't kick in during the lifetime of the test.")
-                .isGreaterThanOrEqualTo(60_000);
+    void append_should_work_when_server_becomes_reachable_again() {
 
         // Create the logger.
         LOGGER.debug("{} creating the logger", LOGGER_PREFIX);
         LoggerContext loggerContext = loggerContextExtension.getLoggerContext();
-        Logger logger = loggerContext.getLogger(RedisAppenderReconnectTest.class.getCanonicalName());
+        Logger logger = loggerContext.getLogger(RedisAppenderReconnectTest.class);
 
         // Try to append the 1st message.
         LOGGER.debug("{} logging the 1st message", LOGGER_PREFIX);
         logger.error("1st");
 
-        // Give some slack to the throttler to get notified by the buffer update.
-        Thread.sleep(500);
-
         // Verify the persistence of the 1st message.
         Jedis jedis = redisClientExtension.getClient();
-        String persistedMessage1 = jedis.lpop(RedisAppenderReconnectTestConfig.REDIS_KEY);
-        Assertions.assertThat(persistedMessage1).isEqualTo("1st");
+        Awaitility
+                .await("Redis write await")
+                .atMost(Duration.ofSeconds(5))
+                .untilAsserted(() -> {
+                    String persistedMessage1 = jedis.lpop(redisKey);
+                    Assertions.assertThat(persistedMessage1).isEqualTo("1st");
+                });
 
         // Verify the throttler counter after the 1st message.
-        RedisAppender appender = loggerContextExtension
-                .getLoggerContext()
-                .getConfiguration()
-                .getAppender(RedisAppenderReconnectTestConfig.LOG4J2_APPENDER_NAME);
+        RedisAppender appender = loggerContextExtension.getConfig().getAppender(redisAppenderName);
         RedisThrottlerJmxBean jmxBean = appender.getJmxBean();
         Assertions.assertThat(jmxBean.getTotalEventCount()).isEqualTo(1);
         Assertions.assertThat(jmxBean.getRedisPushSuccessCount()).isEqualTo(1);
@@ -106,14 +118,16 @@ public class RedisAppenderReconnectTest {
         LOGGER.debug("{} logging the 2nd message, which should fail silently", LOGGER_PREFIX);
         logger.error("2nd");
 
-        // Give some slack to the throttler to get notified by the buffer update.
-        Thread.sleep(500);
-
         // Verify the throttler counter after the 2nd message.
-        Assertions.assertThat(jmxBean.getTotalEventCount()).isEqualTo(2);
-        Assertions.assertThat(jmxBean.getRedisPushSuccessCount()).isEqualTo(1);
-        Assertions.assertThat(jmxBean.getRedisPushFailureCount()).isEqualTo(1);
-        Assertions.assertThat(jmxBean.getIgnoredEventCount()).isEqualTo(0);
+        Awaitility
+                .await("JMX bean update await")
+                .atMost(Duration.ofSeconds(5))
+                .untilAsserted(() -> {
+                    Assertions.assertThat(jmxBean.getTotalEventCount()).isEqualTo(2);
+                    Assertions.assertThat(jmxBean.getRedisPushSuccessCount()).isEqualTo(1);
+                    Assertions.assertThat(jmxBean.getRedisPushFailureCount()).isEqualTo(1);
+                    Assertions.assertThat(jmxBean.getIgnoredEventCount()).isEqualTo(0);
+                });
 
         // Try to append the 3rd message.
         LOGGER.debug("{} logging the 3rd message, which should fail loudly", LOGGER_PREFIX);
@@ -134,20 +148,22 @@ public class RedisAppenderReconnectTest {
         LOGGER.debug("{} starting server again", LOGGER_PREFIX);
         redisServer.start();
         jedis.connect();
-        jedis.auth(RedisAppenderReconnectTestConfig.REDIS_PASSWORD);
+        jedis.auth(redisPassword);
 
         // Try to append the 4th message.
         LOGGER.debug("{} logging the 4th message", LOGGER_PREFIX);
         logger.error("4th");
 
-        // Give some slack to the throttler to get notified by the buffer update.
-        Thread.sleep(500);
+        // Verify that the 4th message is persisted.
+        Awaitility
+                .await("Redis write await")
+                .atMost(Duration.ofSeconds(5))
+                .untilAsserted(() -> {
+                    String persistedMessage4 = jedis.lpop(redisKey);
+                    Assertions.assertThat(persistedMessage4).isEqualTo("4th");
+                });
 
-        // Verify that the 2nd message is *not* persisted.
-        String persistedMessage4 = jedis.lpop(RedisAppenderReconnectTestConfig.REDIS_KEY);
-        Assertions.assertThat(persistedMessage4).isEqualTo("4th");
-
-        // Verify the throttler counter after the 2nd message.
+        // Verify the throttler counter after the 4th message.
         Assertions.assertThat(jmxBean.getTotalEventCount()).isEqualTo(4);
         Assertions.assertThat(jmxBean.getRedisPushSuccessCount()).isEqualTo(2);
         Assertions.assertThat(jmxBean.getRedisPushFailureCount()).isEqualTo(1);

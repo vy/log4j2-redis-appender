@@ -20,6 +20,8 @@
 
 - Replaced hardcoded Guava rate limiter with Resilience4j. (#23)
 
+- Switched to programmatic `LoggerContext` creation in tests. (#24)
+
 ### (2022-10-04) v0.11.1
 
 - Earlier throttler fix has introduced a bug. The buffer cursor is not reset correctly and caused duplicates in logged events. (Thanks to [Khaled Bakhtiari](https://github.com/ec84b4) for the report.)

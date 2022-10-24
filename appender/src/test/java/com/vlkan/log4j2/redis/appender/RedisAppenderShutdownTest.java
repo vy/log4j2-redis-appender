@@ -27,43 +27,53 @@ class RedisAppenderShutdownTest {
 
     private static final Logger LOGGER = StatusLogger.getLogger();
 
-    private static final String LOGGER_PREFIX = "[" + RedisAppenderShutdownTest.class.getSimpleName() + "]";
+    private static final String CLASS_NAME = RedisAppenderShutdownTest.class.getSimpleName();
+
+    private static final String LOGGER_PREFIX = "[" + CLASS_NAME + "]";
+
+    private final String redisHost = NetworkUtils.localHostName();
+
+    private final int redisPort = NetworkUtils.findUnusedPort(redisHost);
+
+    private final String redisPassword = String.format("%s-RedisPassword-%s:%d", CLASS_NAME, redisHost, redisPort);
+
+    private final String redisKey = String.format("%s-RedisKey-%s:%d", CLASS_NAME, redisHost, redisPort);
+
+    private final String redisAppenderName = String.format("%s-RedisAppender-%s-%d", CLASS_NAME, redisHost, redisPort);
 
     @Order(1)
     @RegisterExtension
-    final RedisServerExtension redisServerExtension =
-            new RedisServerExtension(
-                    RedisAppenderShutdownTestConfig.REDIS_PORT,
-                    RedisAppenderShutdownTestConfig.REDIS_PASSWORD);
+    final RedisServerExtension redisServerExtension = new RedisServerExtension(redisPort, redisPassword);
 
     @Order(2)
     @RegisterExtension
-    final RedisClientExtension redisClientExtension =
-            new RedisClientExtension(
-                    RedisAppenderShutdownTestConfig.REDIS_HOST,
-                    RedisAppenderShutdownTestConfig.REDIS_PORT,
-                    RedisAppenderShutdownTestConfig.REDIS_PASSWORD);
+    final RedisClientExtension redisClientExtension = new RedisClientExtension(redisHost, redisPort, redisPassword);
 
     @Order(3)
     @RegisterExtension
     final LoggerContextExtension loggerContextExtension =
             new LoggerContextExtension(
-                    RedisAppenderShutdownTestConfig.LOG4J2_CONFIG_FILE_URI);
+                    CLASS_NAME,
+                    redisAppenderName,
+                    configBuilder -> configBuilder.add(configBuilder
+                            .newAppender(redisAppenderName, "RedisAppender")
+                            .addAttribute("host", redisHost)
+                            .addAttribute("port", redisPort)
+                            .addAttribute("password", redisPassword)
+                            .addAttribute("key", redisKey)
+                            .addAttribute("ignoreExceptions", false)
+                            .add(configBuilder
+                                    .newLayout("PatternLayout")
+                                    .addAttribute("pattern", "%m"))
+                            .addComponent(configBuilder
+                                    .newComponent("RedisThrottlerConfig")
+                                    // This test needs a `flushPeriodMillis` long enough that it won't kick in during the lifetime of the test.
+                                    .addAttribute("flushPeriodMillis", 60_000L)
+                                    // This test needs a `batchSize` of 2, so that it is easy to play around with the batch and fill it up to trigger a flush.
+                                    .addAttribute("batchSize", 2))));
 
     @Test
     void shutdown_should_flush_the_buffer() throws InterruptedException {
-
-        // Verify the buffer size.
-        Assertions
-                .assertThat(RedisAppenderShutdownTestConfig.BATCH_SIZE)
-                .as("This test needs a `batchSize` of 2, so that it is easy to play around with the batch and fill it up to trigger a flush.")
-                .isEqualTo(2);
-
-        // Verify the flush period.
-        Assertions
-                .assertThat(RedisAppenderShutdownTestConfig.FLUSH_PERIOD_MILLIS)
-                .as("This test needs a `flushPeriodMillis` long enough that it won't kick in during the lifetime of the test.")
-                .isGreaterThanOrEqualTo(60_000);
 
         // Create the logger.
         LOGGER.debug("{} creating the logger", LOGGER_PREFIX);
@@ -78,14 +88,13 @@ class RedisAppenderShutdownTest {
 
         // Verify that the 1st message is *not* persisted.
         Jedis jedis = redisClientExtension.getClient();
-        long persistedMessageCount1 = jedis.llen(RedisAppenderShutdownTestConfig.REDIS_KEY);
+        long persistedMessageCount1 = jedis.llen(redisKey);
         Assertions.assertThat(persistedMessageCount1).isEqualTo(0);
 
         // Verify the throttler counter after the 1st message.
         RedisAppender appender = loggerContextExtension
-                .getLoggerContext()
-                .getConfiguration()
-                .getAppender(RedisAppenderShutdownTestConfig.LOG4J2_APPENDER_NAME);
+                .getConfig()
+                .getAppender(redisAppenderName);
         RedisThrottlerJmxBean jmxBean = appender.getJmxBean();
         Assertions.assertThat(jmxBean.getRedisPushSuccessCount()).isEqualTo(0);
 
@@ -97,11 +106,11 @@ class RedisAppenderShutdownTest {
         Thread.sleep(500);
 
         // Verify that the buffer (containing the 1st and 2nd messages) is flushed due to overflow.
-        long persistedMessageCount2 = jedis.llen(RedisAppenderShutdownTestConfig.REDIS_KEY);
+        long persistedMessageCount2 = jedis.llen(redisKey);
         Assertions.assertThat(persistedMessageCount2).isEqualTo(2);
-        String persistedMessage1 = jedis.lpop(RedisAppenderShutdownTestConfig.REDIS_KEY);
+        String persistedMessage1 = jedis.lpop(redisKey);
         Assertions.assertThat(persistedMessage1).isEqualTo("1st");
-        String persistedMessage2 = jedis.lpop(RedisAppenderShutdownTestConfig.REDIS_KEY);
+        String persistedMessage2 = jedis.lpop(redisKey);
         Assertions.assertThat(persistedMessage2).isEqualTo("2nd");
 
         // Verify the throttler counter after the 2nd message.
@@ -115,7 +124,7 @@ class RedisAppenderShutdownTest {
         Thread.sleep(500);
 
         // Verify that the 3rd message is *not* persisted.
-        long persistedMessageCount3 = jedis.llen(RedisAppenderShutdownTestConfig.REDIS_KEY);
+        long persistedMessageCount3 = jedis.llen(redisKey);
         Assertions.assertThat(persistedMessageCount3).isEqualTo(0);
 
         // Verify the throttler counter after the 3rd message.
@@ -125,9 +134,9 @@ class RedisAppenderShutdownTest {
         appender.stop();
 
         // Verify that the buffer (containing the 1st message) is flushed due to shut down.
-        long persistedMessageCount4 = jedis.llen(RedisAppenderShutdownTestConfig.REDIS_KEY);
+        long persistedMessageCount4 = jedis.llen(redisKey);
         Assertions.assertThat(persistedMessageCount4).isEqualTo(1);
-        String persistedMessage3 = jedis.lpop(RedisAppenderShutdownTestConfig.REDIS_KEY);
+        String persistedMessage3 = jedis.lpop(redisKey);
         Assertions.assertThat(persistedMessage3).isEqualTo("3rd");
 
         // Verify the throttler counter after the shutdown.

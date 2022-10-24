@@ -32,21 +32,22 @@ import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 class RedisThrottler implements AutoCloseable {
 
     private static final StatusLogger LOGGER = StatusLogger.getLogger();
 
+    private static final AtomicInteger JMX_BEAN_COUNTER = new AtomicInteger(0);
+
     /**
      * Reference count of JMX beans.
      * <p>
-     * Certain applications (e.g., Spring Boot) known to reconfigure
-     * <code>LoggerContext</code> multiple times. This triggers multiple
-     * interleaved start-stop calls causing <code>RedisThrottler</code> to
-     * unregister an in-use JMX bean. This map keeps the reference counts to
-     * created JMX beans and unregisters them at close if there are no more
-     * references.
+     * Certain applications (e.g., Spring Boot) known to reconfigure <code>LoggerContext</code> multiple times.
+     * This triggers multiple interleaved start-stop calls causing <code>RedisThrottler</code> to unregister an in-use JMX bean.
+     * This map keeps the reference counts to created JMX beans and unregisters them at close if there are no more references.
+     * </p>
      */
     private static final Map<ObjectName, Integer> JMX_BEAN_REFERENCE_COUNT_BY_NAME = new HashMap<>();
 
@@ -118,14 +119,12 @@ class RedisThrottler implements AutoCloseable {
     private ObjectName createJmxBeanName() {
         String beanName = config.getJmxBeanName();
         if (beanName == null) {
-            LoggerContext loggerContext = appender.getConfig().getLoggerContext();
-            if (loggerContext == null) {
-                loggerContext = (LoggerContext) LogManager.getContext(false);
-            }
+            int salt = JMX_BEAN_COUNTER.getAndIncrement();
             beanName = String.format(
-                    "org.apache.logging.log4j2:type=%s,component=Appenders,name=%s,subtype=RedisThrottler",
-                    loggerContext.getName(),
-                    appender.getName());
+                    "org.apache.logging.log4j2:type=%s,component=Appenders,name=%s,subtype=RedisThrottler,salt=%d",
+                    appender.getName(),
+                    appender.getName(),
+                    salt);
         }
         try {
             return new ObjectName(beanName);
