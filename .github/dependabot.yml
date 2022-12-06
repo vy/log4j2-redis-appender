@@ -21,6 +21,10 @@ updates:
       interval: daily
       time: "04:00"
     open-pull-requests-limit: 10
+    ignore:
+      # Ignore Resilience4j 2, since it requires Java 17.
+      - dependency-name: resilience4j-ratelimiter
+        versions: [ "2.x" ]
 
   - package-ecosystem: github-actions
     directory: "/"
