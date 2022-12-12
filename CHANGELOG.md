@@ -14,13 +14,15 @@
  limitations under the License.
 -->
 
-### (????-??-??) v0.12.0
+### (2022-12-12) v0.12.0
 
-- Replaced `it.ozimov:embedded-redis` with `org.signal:embedded-redis`. (#22)
+- Replaced `it.ozimov:embedded-redis` with `org.signal:embedded-redis` (#22)
 
-- Replaced hardcoded Guava rate limiter with Resilience4j. (#23)
+- Replaced hardcoded Guava rate limiter with Resilience4j (#23)
 
-- Switched to programmatic `LoggerContext` creation in tests. (#24)
+- Switched to programmatic `LoggerContext` creation in tests (#24)
+
+- Relocated all the packages to `com.vlkan.log4j2.redis.appender.*` in the fat JAR, otherwise they were (rightfully) causing `Found multiple occurrences of org.json.JSONObject on the class path` errors
 
 ### (2022-10-04) v0.11.1
 
