@@ -14,6 +14,8 @@
  limitations under the License.
 -->
 
+### (????-??-??) v0.13.0
+
 ### (2022-12-12) v0.12.0
 
 - Replaced `it.ozimov:embedded-redis` with `org.signal:embedded-redis` (#22)
