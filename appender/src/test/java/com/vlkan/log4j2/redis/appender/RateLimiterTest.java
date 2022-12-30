@@ -18,10 +18,15 @@ package com.vlkan.log4j2.redis.appender;
 import com.vlkan.log4j2.redis.appender.RateLimiter.Resilience4jRateLimiter;
 import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceAccessMode;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.api.parallel.Resources;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.time.Duration;
+import java.util.Locale;
 
 class RateLimiterTest {
 
@@ -63,6 +68,27 @@ class RateLimiterTest {
                 {  0.01D,    100L,      1},
                 {  0.001D,  1000L,      1}
         };
+    }
+
+    @Test
+    @ResourceLock(value = Resources.LOCALE, mode = ResourceAccessMode.READ_WRITE)
+    void ofMaxPermitCountPerSecond_should_convert_independent_of_locale() {
+
+        // Find a locale that formats floats in an unexpected way
+        Locale newLocale = Locale.forLanguageTag("nl-NL");
+        Assertions.assertThat(String.format(newLocale, "%f", Math.PI)).doesNotMatch("^\\d+\\.\\d+$");
+
+        // Use this odd locale to see if `ofMaxPermitCountPerSecond()` will fail
+        Locale oldLocale = Locale.getDefault();
+        try {
+            Locale.setDefault(newLocale);
+            Assertions
+                    .assertThatCode(() -> RateLimiter.ofMaxPermitCountPerSecond("test", 100))
+                    .doesNotThrowAnyException();
+        } finally {
+            Locale.setDefault(oldLocale);
+        }
+
     }
 
 }

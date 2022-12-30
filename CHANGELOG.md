@@ -16,6 +16,8 @@
 
 ### (????-??-??) v0.13.0
 
+- Fixed `NumberFormatException` thrown by `RateLimiter.ofMaxPermitCountPerSecond()` when the system locale formats floating point numbers in an unexpected way
+
 ### (2022-12-12) v0.12.0
 
 - Replaced `it.ozimov:embedded-redis` with `org.signal:embedded-redis` (#22)
