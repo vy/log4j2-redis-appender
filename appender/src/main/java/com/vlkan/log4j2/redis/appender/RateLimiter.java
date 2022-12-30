@@ -18,6 +18,7 @@ package com.vlkan.log4j2.redis.appender;
 import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 
 import java.time.Duration;
+import java.util.Locale;
 
 abstract class RateLimiter {
 
@@ -62,7 +63,7 @@ abstract class RateLimiter {
         }
 
         // Convert the floating-point number to its cycle representation.
-        String s = String.format("%f", maxPermitCountPerSecond).replaceAll("0+$", "");
+        String s = String.format(Locale.US, "%f", maxPermitCountPerSecond).replaceAll("0+$", "");
         int i = s.indexOf('.');
         long cyclePeriodNanos = 1_000_000_000L;
         int maxPermitCountPerCycle;
