@@ -14,7 +14,7 @@
  limitations under the License.
 -->
 
-### (????-??-??) v0.13.0
+### (2022-12-30) v0.12.1
 
 - Fixed `NumberFormatException` thrown by `RateLimiter.ofMaxPermitCountPerSecond()` when the system locale formats floating point numbers in an unexpected way
 
