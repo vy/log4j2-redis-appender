@@ -251,6 +251,10 @@ Contributors
 - [t9t](https://github.com/t9t)
 - [Yaroslav Skopets](https://github.com/yskopets)
 
+# Security policy
+
+If you have encountered an unlisted security vulnerability or other unexpected behaviour that has security impact, please report them privately to the [volkan@yazi.ci](mailto:volkan@yazi.ci) email address.
+
 # License
 
 Copyright &copy; 2017-2023 [Volkan Yazıcı](https://volkan.yazi.ci/)
