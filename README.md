@@ -1,11 +1,11 @@
 <!---
- Copyright 2017-2022 Volkan Yazıcı
+ Copyright 2017-2023 Volkan Yazıcı
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
 
-        http://www.apache.org/licenses/LICENSE-2.0
+        https://www.apache.org/licenses/LICENSE-2.0
 
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,7 +16,7 @@
 
 [![Actions Status](https://github.com/vy/log4j2-redis-appender/workflows/build/badge.svg)](https://github.com/vy/log4j2-redis-appender/actions)
 [![Maven Central](https://img.shields.io/maven-central/v/com.vlkan.log4j2/log4j2-redis-appender-parent.svg)](https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.vlkan.log4j2%22)
-[![License](https://img.shields.io/github/license/vy/log4j2-redis-appender.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
+[![License](https://img.shields.io/github/license/vy/log4j2-redis-appender.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 `RedisAppender` plugin provides a [Log4j 2.x](https://logging.apache.org/log4j/2.x/)
 appender for [Redis](https://redis.io/) in-memory data structure store. The plugin
@@ -253,13 +253,13 @@ Contributors
 
 # License
 
-Copyright &copy; 2017-2022 [Volkan Yazıcı](http://vlkan.com/)
+Copyright &copy; 2017-2023 [Volkan Yazıcı](https://volkan.yazi.ci/)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-   http://www.apache.org/licenses/LICENSE-2.0
+   https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
