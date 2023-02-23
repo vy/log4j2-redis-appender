@@ -14,7 +14,7 @@
  limitations under the License.
 -->
 
-### (????-??-??) v0.13.0
+### (2023-02-23) v0.12.2
 
 - Fixed `RedisThrottler` to correctly increment the event rate limit failure count in `RedisThrottlerJmxBean` (#50)
 
