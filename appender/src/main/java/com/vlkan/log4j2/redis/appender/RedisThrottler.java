@@ -271,7 +271,7 @@ class RedisThrottler implements AutoCloseable {
         }
 
         if (eventRateLimiter != null && !eventRateLimiter.tryAcquire()) {
-            jmxBean.incrementByteRateLimitFailureCount(1);
+            jmxBean.incrementEventRateLimitFailureCount(1);
             tryThrow("failed acquiring event rate limiter token");
             return;
         }
