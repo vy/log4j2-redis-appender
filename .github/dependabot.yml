@@ -23,8 +23,8 @@ updates:
     open-pull-requests-limit: 10
     ignore:
       # Ignore Resilience4j 2, since it requires Java 17.
-      - dependency-name: resilience4j-ratelimiter
-        versions: [ "2.x.x" ]
+      - dependency-name: "io.github.resilience4j:*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: "/"
