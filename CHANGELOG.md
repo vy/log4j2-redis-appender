@@ -14,6 +14,10 @@
  limitations under the License.
 -->
 
+### (2023-08-23) v0.13.0
+
+- Fixed broken `jedis.version` Maven property causing the incorrect version injection
+
 ### (2023-02-23) v0.12.2
 
 - Fixed `RedisThrottler` to correctly increment the event rate limit failure count in `RedisThrottlerJmxBean` (#50)
