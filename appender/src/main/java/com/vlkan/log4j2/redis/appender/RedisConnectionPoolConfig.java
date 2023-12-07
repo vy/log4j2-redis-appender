@@ -100,8 +100,8 @@ public class RedisConnectionPoolConfig {
         config.setLifo(builder.lifo);
         config.setFairness(builder.fairness);
         config.setMaxWait(Duration.ofMillis(builder.maxWaitMillis));
-        config.setMinEvictableIdleTime(Duration.ofMillis(builder.minEvictableIdleTimeMillis));
-        config.setSoftMinEvictableIdleTime(Duration.ofMillis(builder.softMinEvictableIdleTimeMillis));
+        config.setMinEvictableIdleDuration(Duration.ofMillis(builder.minEvictableIdleTimeMillis));
+        config.setSoftMinEvictableIdleDuration(Duration.ofMillis(builder.softMinEvictableIdleTimeMillis));
         config.setNumTestsPerEvictionRun(builder.numTestsPerEvictionRun);
         config.setTestOnCreate(builder.testOnCreate);
         config.setTestOnBorrow(builder.testOnBorrow);
