@@ -88,13 +88,15 @@
         <!-- library versions -->
         <assertj.version>3.24.2</assertj.version>
         <awaitility.version>4.2.0</awaitility.version>
+        <bndtools.version>7.0.0</bndtools.version>
         <embedded-redis.version>0.8.3</embedded-redis.version>
         <errorprone.version>2.15.0</errorprone.version>
         <jedis.version>5.0.2</jedis.version>
         <junit5.version>5.10.1</junit5.version>
-        <log4j2.version>2.21.1</log4j2.version>
+        <log4j2.version>2.22.0</log4j2.version>
         <resilience4j.version>1.7.1</resilience4j.version>
         <slf4j.version>2.0.9</slf4j.version>
+        <spotbugs.version>4.8.2</spotbugs.version>
 
         <!-- plugin versions -->
         <flatten-maven-plugin.version>1.5.0</flatten-maven-plugin.version>
@@ -158,6 +160,18 @@
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-simple</artifactId>
                 <version>${slf4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-annotations</artifactId>
+                <version>${spotbugs.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>biz.aQute.bnd</groupId>
+                <artifactId>biz.aQute.bnd.annotation</artifactId>
+                <version>${bndtools.version}</version>
             </dependency>
 
             <dependency>
