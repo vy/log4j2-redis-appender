@@ -179,6 +179,7 @@
                 <version>${maven-compiler-plugin.version}</version>
                 <configuration>
                     <source>${java.version}</source>
+                    <release>${java.version}</release>
                     <target>${java.version}</target>
                     <showWarnings>true</showWarnings>
                     <!-- "fork" needs be enabled to make "compilerArgs" take effect. -->
@@ -190,6 +191,7 @@
                         <arg>-Xlint:-processing</arg>
                         <arg>-Xlint:-serial</arg>
                     </compilerArgs>
+                    <showDeprecation>true</showDeprecation>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.apache.logging.log4j</groupId>
@@ -216,7 +218,7 @@
                                     <version>[3.2.0,4)</version>
                                 </requireMavenVersion>
                                 <requireJavaVersion>
-                                    <version>[1.8.0,9)</version>
+                                    <version>[17,18)</version>
                                 </requireJavaVersion>
                             </rules>
                         </configuration>
@@ -260,7 +262,7 @@
                         </goals>
                     </execution>
                     <execution>
-                        <id>flatten.clean</id>
+                        <id>clean-flattened</id>
                         <phase>clean</phase>
                         <goals>
                             <goal>clean</goal>
