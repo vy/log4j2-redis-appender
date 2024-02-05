@@ -86,7 +86,7 @@
         <java.version>8</java.version>
 
         <!-- library versions -->
-        <assertj.version>3.25.2</assertj.version>
+        <assertj.version>3.25.3</assertj.version>
         <awaitility.version>4.2.0</awaitility.version>
         <embedded-redis.version>0.8.3</embedded-redis.version>
         <errorprone.version>2.15.0</errorprone.version>
