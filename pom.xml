@@ -92,7 +92,7 @@
         <errorprone.version>2.15.0</errorprone.version>
         <jedis.version>5.1.2</jedis.version>
         <junit5.version>5.10.2</junit5.version>
-        <log4j2.version>2.23.0</log4j2.version>
+        <log4j2.version>2.23.1</log4j2.version>
         <resilience4j.version>1.7.1</resilience4j.version>
         <slf4j.version>2.0.12</slf4j.version>
 
