@@ -87,7 +87,7 @@
 
         <!-- library versions -->
         <assertj.version>3.25.3</assertj.version>
-        <awaitility.version>4.2.0</awaitility.version>
+        <awaitility.version>4.2.1</awaitility.version>
         <embedded-redis.version>0.8.3</embedded-redis.version>
         <errorprone.version>2.15.0</errorprone.version>
         <jedis.version>5.1.2</jedis.version>
