@@ -30,13 +30,15 @@ class RedisClientExtension implements BeforeEachCallback, AfterEachCallback {
 
     private final int port;
 
+    private final String username ;
     private final String password;
 
     private final Jedis client;
 
-    RedisClientExtension(String host, int port, String password) {
+    RedisClientExtension(String host, int port, String username, String password) {
         this.host = host;
         this.port = port;
+        this.username = username;
         this.password = password;
         this.client = new Jedis(host, port);
     }
@@ -45,7 +47,7 @@ class RedisClientExtension implements BeforeEachCallback, AfterEachCallback {
     public void beforeEach(ExtensionContext ignored) {
         LOGGER.debug("starting Redis client (host={}, port={})", host, port);
         client.connect();
-        client.auth(password);
+        client.auth(username, password);
     }
 
     @Override

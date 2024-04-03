@@ -47,6 +47,8 @@ public class RedisAppenderSentinelTest {
 
     private final String redisSentinelMasterName = String.format("%s-RedisSentinelMasterName-%s:%d", CLASS_NAME, redisHost, redisPort);
 
+    private final String redisUsername = String.format("%s-RedisUsername-%s:%d", CLASS_NAME, redisHost, redisPort);
+
     private final String redisPassword = String.format("%s-RedisPassword-%s:%d", CLASS_NAME, redisHost, redisPort);
 
     private final String redisKey = String.format("%s-RedisKey-%s:%d", CLASS_NAME, redisHost, redisPort);
@@ -55,7 +57,7 @@ public class RedisAppenderSentinelTest {
 
     @Order(1)
     @RegisterExtension
-    final RedisServerExtension redisServerExtension = new RedisServerExtension(redisPort, redisPassword);
+    final RedisServerExtension redisServerExtension = new RedisServerExtension(redisPort, redisUsername, redisPassword);
 
     @Order(2)
     @RegisterExtension
@@ -64,7 +66,7 @@ public class RedisAppenderSentinelTest {
 
     @Order(3)
     @RegisterExtension
-    final RedisClientExtension redisClientExtension = new RedisClientExtension(redisHost, redisPort, redisPassword);
+    final RedisClientExtension redisClientExtension = new RedisClientExtension(redisHost, redisPort, redisUsername, redisPassword);
 
     @Order(4)
     @RegisterExtension
@@ -76,6 +78,7 @@ public class RedisAppenderSentinelTest {
                             .newAppender(redisAppenderName, "RedisAppender")
                             .addAttribute("sentinelNodes", redisHost + ":" + redisSentinelPort)
                             .addAttribute("sentinelMaster", redisSentinelMasterName)
+                            .addAttribute("username", redisUsername)
                             .addAttribute("password", redisPassword)
                             .addAttribute("key", redisKey)
                             .addAttribute("ignoreExceptions", false)

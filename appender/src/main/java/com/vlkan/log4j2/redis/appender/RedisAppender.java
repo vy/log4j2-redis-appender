@@ -75,6 +75,8 @@ public class RedisAppender implements Appender {
 
     private final int port;
 
+    private final String username;
+
     private final String password;
 
     private final int connectionTimeoutSeconds;
@@ -107,6 +109,7 @@ public class RedisAppender implements Appender {
         this.keyBytes = builder.key.getBytes(builder.charset);
         this.host = builder.host;
         this.port = builder.port;
+        this.username = builder.username;
         this.password = builder.password;
         this.connectionTimeoutSeconds = builder.connectionTimeoutSeconds;
         this.socketTimeoutSeconds = builder.socketTimeoutSeconds;
@@ -243,6 +246,7 @@ public class RedisAppender implements Appender {
                     poolConfig.getJedisPoolConfig(),
                     connectionTimeoutMillis,
                     socketTimeoutMillis,
+                    username,
                     password,
                     database,
                     null);      // clientName
@@ -253,6 +257,7 @@ public class RedisAppender implements Appender {
                     port,
                     connectionTimeoutMillis,
                     socketTimeoutMillis,
+                    username,
                     password,
                     database,
                     null,       // clientName
@@ -330,6 +335,9 @@ public class RedisAppender implements Appender {
 
         @PluginBuilderAttribute
         private String host = "localhost";
+
+        @PluginBuilderAttribute
+        private String username = null;
 
         @PluginBuilderAttribute
         private String password = null;
