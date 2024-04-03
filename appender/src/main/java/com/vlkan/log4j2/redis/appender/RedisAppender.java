@@ -41,6 +41,7 @@ import redis.clients.jedis.util.Pool;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -89,6 +90,8 @@ public class RedisAppender implements Appender {
 
     private final String sentinelMaster;
 
+    private final boolean usePubSubParadigm;
+
     private final RedisConnectionPoolConfig poolConfig;
 
     private final RedisThrottler throttler;
@@ -116,6 +119,7 @@ public class RedisAppender implements Appender {
         this.ignoreExceptions = builder.ignoreExceptions;
         this.sentinelNodes = builder.sentinelNodes;
         this.sentinelMaster = builder.sentinelMaster;
+        this.usePubSubParadigm = builder.usePubSubParadigm;
         this.poolConfig = builder.poolConfig;
         this.throttler = new RedisThrottler(builder.getThrottlerConfig(), this, ignoreExceptions);
     }
@@ -157,7 +161,15 @@ public class RedisAppender implements Appender {
     void consumeThrottledEvents(byte[]... events) {
         LOGGER.debug("{} consuming {} events", logPrefix, events.length);
         try (Jedis jedis = jedisPool.getResource()) {
-            jedis.rpush(keyBytes, events);
+            Arrays.stream(events).forEachOrdered(event -> sendEvent(jedis, event));
+        }
+    }
+
+    private void sendEvent(final Jedis jedis, final byte[] event) {
+        if (usePubSubParadigm) {
+            jedis.publish(keyBytes, event);
+        } else {
+            jedis.rpush(keyBytes, event);
         }
     }
 
@@ -365,6 +377,9 @@ public class RedisAppender implements Appender {
 
         @PluginElement("RedisThrottlerConfig")
         private RedisThrottlerConfig throttlerConfig = RedisThrottlerConfig.newBuilder().build();
+
+        @PluginBuilderAttribute
+        private boolean usePubSubParadigm = false;
 
         private Builder() {
             // Do nothing.

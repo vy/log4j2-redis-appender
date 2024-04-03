@@ -144,7 +144,5 @@ class RedisAppenderShutdownTest {
 
         // Verify the throttler counter after the shutdown.
         Assertions.assertThat(jmxBean.getRedisPushSuccessCount()).isEqualTo(3);
-
     }
-
 }

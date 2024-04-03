@@ -104,6 +104,7 @@ Note that `sentinelNodes` and `sentinelMaster` have priority over `host` and
 | `sentinelMaster` | String | `null` | Redis sentinel master name |
 | `username` | String | `null` | Redis username |
 | `password` | String | `null` | Redis password |
+| `usePubSubParadigm` | boolean | `false` | Publish messages to a channel identified by `key` instead of using rpush. |
 | `connectionTimeoutSeconds` | int | 2 | initial connection timeout in seconds |
 | `socketTimeoutSeconds` | int | 2 | socket timeout in seconds |
 | `ignoreExceptions` | boolean | `true` | Enabling causes exceptions encountered while appending events to be internally logged and then ignored. When set to false, exceptions will be propagated to the caller, instead. You must set this to false when wrapping this appender in a `FailoverAppender`. |
