@@ -93,23 +93,23 @@ Note that `sentinelNodes` and `sentinelMaster` have priority over `host` and
 
 `RedisAppender` is configured with the following parameters:
 
-| Parameter Name              | Type | Default | Description                                                                                                                                                                                                                                                      |
-|-----------------------------|------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `charset`                   | String | `UTF-8` | output charset                                                                                                                                                                                                                                                   |
-| `database`                  | int | 0 | Redis logical database                                                                                                                                                                                                                                           |
-| `key`                       | String | | Redis queue key                                                                                                                                                                                                                                                  |
-| `host`                      | String | `localhost` | Redis host                                                                                                                                                                                                                                                       |
-| `port`                      | int | 6379 | Redis port                                                                                                                                                                                                                                                       |
-| `sentinelNodes`             | String | `null` | Redis sentinel nodes as comma-separated list, e.g., `host1:port1,host2:port2`. If specified, `host` and `port` parameters are ignored.                                                                                                                           |
-| `sentinelMaster`            | String | `null` | Redis sentinel master name                                                                                                                                                                                                                                       |
-| `username`                  | String | `null` | Redis username                                                                                                                                                                                                                                                   |
-| `password`                  | String | `null` | Redis password                                                                                                                                                                                                                                                   |
-| `connectionTimeoutSeconds`  | int | 2 | initial connection timeout in seconds                                                                                                                                                                                                                            |
-| `socketTimeoutSeconds`      | int | 2 | socket timeout in seconds                                                                                                                                                                                                                                        |
-| `ignoreExceptions`          | boolean | `true` | Enabling causes exceptions encountered while appending events to be internally logged and then ignored. When set to false, exceptions will be propagated to the caller, instead. You must set this to false when wrapping this appender in a `FailoverAppender`. |
-| `Layout`                    | Layout | `PatternLayout` | used to format the `LogEvent`s                                                                                                                                                                                                                                   |
-| `RedisConnectionPoolConfig` | RedisConnectionPoolConfig | | Redis connection pool configuration                                                                                                                                                                                                                              |
-| `RedisThrottlerConfig`      | RedisThrottlerConfig | | Redis throttler configuration                                                                                                                                                                                                                                    |
+| Parameter Name | Type | Default | Description |
+|----------------|------|---------|-------------|
+| `charset` | String | `UTF-8` | output charset |
+| `database` | int | 0 | Redis logical database |
+| `key` | String | | Redis queue key |
+| `host` | String | `localhost` | Redis host|
+| `port` | int | 6379 | Redis port |
+| `sentinelNodes` | String | `null` | Redis sentinel nodes as comma-separated list, e.g., `host1:port1,host2:port2`. If specified, `host` and `port` parameters are ignored. |
+| `sentinelMaster` | String | `null` | Redis sentinel master name |
+| `username` | String | `null` | Redis username |
+| `password` | String | `null` | Redis password |
+| `connectionTimeoutSeconds` | int | 2 | initial connection timeout in seconds |
+| `socketTimeoutSeconds` | int | 2 | socket timeout in seconds |
+| `ignoreExceptions` | boolean | `true` | Enabling causes exceptions encountered while appending events to be internally logged and then ignored. When set to false, exceptions will be propagated to the caller, instead. You must set this to false when wrapping this appender in a `FailoverAppender`. |
+| `Layout` | Layout | `PatternLayout` | used to format the `LogEvent`s |
+| `RedisConnectionPoolConfig` | RedisConnectionPoolConfig | | Redis connection pool configuration |
+| `RedisThrottlerConfig` | RedisThrottlerConfig | | Redis throttler configuration |
 
 ## Redis Connection Pool
 
