@@ -14,9 +14,18 @@
  limitations under the License.
 -->
 
-### (2024-04-14) v0.14.0
+
+### (2024-04-14) v0.15.0
 
 - Added username support (#134)
+
+### (2023-12-07) v0.14.0
+
+- Upgraded the compiler version to Java 17. Runtime still requires Java 8 and later.
+
+- Updated Jedis to version `5.1.0`
+
+- Updated Log4j to version `2.22.0`
 
 ### (2023-08-23) v0.13.0
 
