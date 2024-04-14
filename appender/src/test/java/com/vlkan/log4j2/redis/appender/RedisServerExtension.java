@@ -30,14 +30,14 @@ class RedisServerExtension implements BeforeEachCallback, AfterEachCallback {
 
     private final RedisServer redisServer;
 
-    RedisServerExtension(int port, String password) {
+    RedisServerExtension(int port, String username, String password) {
         this.port = port;
         try {
             this.redisServer = RedisServer
                     .builder()
                     .port(port)
                     .bind("0.0.0.0")
-                    .setting("requirepass " + password)
+                    .setting("user " + username + " on -debug +@all ~* >" + password)
                     .build();
         } catch (Exception error) {
             String message = String.format("failed creating Redis server (port=%d)", port);

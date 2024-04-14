@@ -35,6 +35,8 @@ class RedisAppenderShutdownTest {
 
     private final int redisPort = NetworkUtils.findUnusedPort(redisHost);
 
+    private final String redisUsername = String.format("%s-RedisUsername-%s:%d", CLASS_NAME, redisHost, redisPort);
+
     private final String redisPassword = String.format("%s-RedisPassword-%s:%d", CLASS_NAME, redisHost, redisPort);
 
     private final String redisKey = String.format("%s-RedisKey-%s:%d", CLASS_NAME, redisHost, redisPort);
@@ -43,11 +45,11 @@ class RedisAppenderShutdownTest {
 
     @Order(1)
     @RegisterExtension
-    final RedisServerExtension redisServerExtension = new RedisServerExtension(redisPort, redisPassword);
+    final RedisServerExtension redisServerExtension = new RedisServerExtension(redisPort, redisUsername, redisPassword);
 
     @Order(2)
     @RegisterExtension
-    final RedisClientExtension redisClientExtension = new RedisClientExtension(redisHost, redisPort, redisPassword);
+    final RedisClientExtension redisClientExtension = new RedisClientExtension(redisHost, redisPort, redisUsername, redisPassword);
 
     @Order(3)
     @RegisterExtension
@@ -59,6 +61,7 @@ class RedisAppenderShutdownTest {
                             .newAppender(redisAppenderName, "RedisAppender")
                             .addAttribute("host", redisHost)
                             .addAttribute("port", redisPort)
+                            .addAttribute("username", redisUsername)
                             .addAttribute("password", redisPassword)
                             .addAttribute("key", redisKey)
                             .addAttribute("ignoreExceptions", false)

@@ -102,6 +102,7 @@ Note that `sentinelNodes` and `sentinelMaster` have priority over `host` and
 | `port` | int | 6379 | Redis port |
 | `sentinelNodes` | String | `null` | Redis sentinel nodes as comma-separated list, e.g., `host1:port1,host2:port2`. If specified, `host` and `port` parameters are ignored. |
 | `sentinelMaster` | String | `null` | Redis sentinel master name |
+| `username` | String | `null` | Redis username |
 | `password` | String | `null` | Redis password |
 | `connectionTimeoutSeconds` | int | 2 | initial connection timeout in seconds |
 | `socketTimeoutSeconds` | int | 2 | socket timeout in seconds |
