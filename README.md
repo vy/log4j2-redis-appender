@@ -1,5 +1,5 @@
 <!---
- Copyright 2017-2023 Volkan Yazıcı
+ Copyright 2017-2024 Volkan Yazıcı
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -259,7 +259,7 @@ If you have encountered an unlisted security vulnerability or other unexpected b
 
 # License
 
-Copyright &copy; 2017-2023 [Volkan Yazıcı](https://volkan.yazi.ci/)
+Copyright &copy; 2017-2024 [Volkan Yazıcı](https://volkan.yazi.ci/)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
