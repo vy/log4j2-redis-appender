@@ -14,6 +14,10 @@
  limitations under the License.
 -->
 
+### (2024-04-14) v0.14.0
+
+- Added username support (#134)
+
 ### (2023-08-23) v0.13.0
 
 - Fixed broken `jedis.version` Maven property causing the incorrect version injection
