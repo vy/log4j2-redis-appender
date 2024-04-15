@@ -349,7 +349,7 @@ public class RedisAppender implements Appender {
         private String host = "localhost";
 
         @PluginBuilderAttribute
-        private String username = null;
+        private String username = "default";
 
         @PluginBuilderAttribute
         private String password = null;
