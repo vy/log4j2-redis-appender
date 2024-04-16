@@ -42,6 +42,7 @@ import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -57,6 +58,11 @@ import static org.apache.logging.log4j.util.Strings.isNotBlank;
 public class RedisAppender implements Appender {
 
     private static final StatusLogger LOGGER = StatusLogger.getLogger();
+
+    public static final String RPUSH_COMMAND = "rpush";
+    public static final String PUBLISH_COMMAND = "publish";
+
+    private static final List<String> ALLOWED_COMMANDS = Arrays.asList(RPUSH_COMMAND, PUBLISH_COMMAND);
 
     private final Configuration config;
 
@@ -90,7 +96,7 @@ public class RedisAppender implements Appender {
 
     private final String sentinelMaster;
 
-    private final boolean usePubSubParadigm;
+    private final String command;
 
     private final RedisConnectionPoolConfig poolConfig;
 
@@ -119,7 +125,7 @@ public class RedisAppender implements Appender {
         this.ignoreExceptions = builder.ignoreExceptions;
         this.sentinelNodes = builder.sentinelNodes;
         this.sentinelMaster = builder.sentinelMaster;
-        this.usePubSubParadigm = builder.usePubSubParadigm;
+        this.command = builder.command;
         this.poolConfig = builder.poolConfig;
         this.throttler = new RedisThrottler(builder.getThrottlerConfig(), this, ignoreExceptions);
     }
@@ -166,7 +172,7 @@ public class RedisAppender implements Appender {
     }
 
     private void sendEvent(final Jedis jedis, final byte[] event) {
-        if (usePubSubParadigm) {
+        if (PUBLISH_COMMAND.equals(command) ) {
             jedis.publish(keyBytes, event);
         } else {
             jedis.rpush(keyBytes, event);
@@ -379,7 +385,7 @@ public class RedisAppender implements Appender {
         private RedisThrottlerConfig throttlerConfig = RedisThrottlerConfig.newBuilder().build();
 
         @PluginBuilderAttribute
-        private boolean usePubSubParadigm = false;
+        private String command = RPUSH_COMMAND;
 
         private Builder() {
             // Do nothing.
@@ -552,6 +558,7 @@ public class RedisAppender implements Appender {
             requireArgument(socketTimeoutSeconds > 0, "expecting: socketTimeoutSeconds > 0, found: %d", socketTimeoutSeconds);
             requireNonNull(poolConfig, "poolConfig");
             requireNonNull(throttlerConfig, "throttlerConfig");
+            requireArgument(ALLOWED_COMMANDS.contains(command), "expecting: anyOf (%s), found: %s", ALLOWED_COMMANDS, command);
         }
 
         @Override

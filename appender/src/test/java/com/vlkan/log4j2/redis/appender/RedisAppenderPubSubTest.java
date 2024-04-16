@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2023 Volkan Yazıcı
+ * Copyright 2017-2024 Volkan Yazıcı
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,9 +43,9 @@ class RedisAppenderPubSubTest {
 
     private final int redisPort = NetworkUtils.findUnusedPort(redisHost);
 
-    private final String redisPassword = String.format("%s-RedisPubPassword-%s:%d", CLASS_NAME, redisHost, redisPort);
+    private final String redisPassword = String.format("%s-RedisPassword-%s:%d", CLASS_NAME, redisHost, redisPort);
 
-    private final String redisUsername = String.format("%s-RedisPubUsername-%s", CLASS_NAME, redisHost);
+    private final String redisUsername = String.format("%s-RedisUsername-%s", CLASS_NAME, redisHost);
 
     private final String redisKey = String.format("%s-RedisKey-%s:%d", CLASS_NAME, redisHost, redisPort);
 
@@ -73,7 +73,7 @@ class RedisAppenderPubSubTest {
                 .addAttribute("password", redisPassword)
                 .addAttribute("key", redisKey)
                 .addAttribute("ignoreExceptions", false)
-                .addAttribute("usePubSubParadigm", true)
+                .addAttribute("command", "publish")
                 .add(configBuilder
                     .newLayout("PatternLayout")
                     .addAttribute("pattern", "%level %m"))
@@ -101,7 +101,7 @@ class RedisAppenderPubSubTest {
         int maxMessageCount = 100;
         int expectedMessageCount = minMessageCount + RANDOM.nextInt(maxMessageCount - minMessageCount);
 
-        JedisPubSubTestImpl pubsub = new JedisPubSubTestImpl();
+        JedisTestSubscriber pubsub = new JedisTestSubscriber();
         executor.execute(() -> redisClientExtension.getClient().subscribe(pubsub, redisKey));
         LOGGER.debug("{} logging {} messages", LOGGER_PREFIX, expectedMessageCount);
         RedisTestMessage[] expectedLogMessages = RedisTestMessage.createRandomArray(expectedMessageCount);
@@ -123,7 +123,7 @@ class RedisAppenderPubSubTest {
                 .getLoggerContext()
                 .getLogger(RedisAppenderPubSubTest.class);
 
-        final JedisPubSubTestImpl pubsub = new JedisPubSubTestImpl();
+        final JedisTestSubscriber pubsub = new JedisTestSubscriber();
         executor.execute(() -> redisClientExtension.getClient().subscribe(pubsub, redisKey));
 
         // Log the 1st message.
@@ -145,7 +145,7 @@ class RedisAppenderPubSubTest {
     private void verifyLogging(
         RedisTestMessage[] expectedLogMessages,
         int expectedTotalEventCount,
-        int expectedRedisPushSuccessCount, final JedisPubSubTestImpl pubsub) {
+        int expectedRedisPushSuccessCount, final JedisTestSubscriber pubsub) {
 
         // Verify the amount of persisted messages.
         LOGGER.debug("{} waiting for the logged messages to be persisted", LOGGER_PREFIX);
