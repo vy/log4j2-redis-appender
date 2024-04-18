@@ -14,6 +14,9 @@
  limitations under the License.
 -->
 
+### (????-??-??) v0.16.0
+
+- Added `publish` command support (#138)
 
 ### (2024-04-14) v0.15.0
 
