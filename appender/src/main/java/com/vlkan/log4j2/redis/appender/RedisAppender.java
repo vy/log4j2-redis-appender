@@ -41,6 +41,7 @@ import redis.clients.jedis.util.Pool;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -56,6 +57,12 @@ import static org.apache.logging.log4j.util.Strings.isNotBlank;
 public class RedisAppender implements Appender {
 
     private static final StatusLogger LOGGER = StatusLogger.getLogger();
+
+    private static final String RPUSH_COMMAND = "rpush";
+
+    private static final String PUBLISH_COMMAND = "publish";
+
+    private static final Set<String> ALLOWED_COMMANDS = Stream.of(RPUSH_COMMAND, PUBLISH_COMMAND).collect(Collectors.toSet());
 
     private final Configuration config;
 
@@ -89,6 +96,8 @@ public class RedisAppender implements Appender {
 
     private final String sentinelMaster;
 
+    private final String command;
+
     private final RedisConnectionPoolConfig poolConfig;
 
     private final RedisThrottler throttler;
@@ -116,6 +125,7 @@ public class RedisAppender implements Appender {
         this.ignoreExceptions = builder.ignoreExceptions;
         this.sentinelNodes = builder.sentinelNodes;
         this.sentinelMaster = builder.sentinelMaster;
+        this.command = builder.command;
         this.poolConfig = builder.poolConfig;
         this.throttler = new RedisThrottler(builder.getThrottlerConfig(), this, ignoreExceptions);
     }
@@ -157,7 +167,18 @@ public class RedisAppender implements Appender {
     void consumeThrottledEvents(byte[]... events) {
         LOGGER.debug("{} consuming {} events", logPrefix, events.length);
         try (Jedis jedis = jedisPool.getResource()) {
-            jedis.rpush(keyBytes, events);
+            Arrays.stream(events).forEachOrdered(event -> sendEvent(jedis, event));
+        }
+    }
+
+    private void sendEvent(final Jedis jedis, final byte[] event) {
+        if (RPUSH_COMMAND.equals(command)) {
+            jedis.rpush(keyBytes, event);
+        } else if (PUBLISH_COMMAND.equals(command)) {
+            jedis.publish(keyBytes, event);
+        } else {
+            String message = String.format("unknown command: `%s`", command);
+            throw new IllegalArgumentException(message);
         }
     }
 
@@ -337,7 +358,7 @@ public class RedisAppender implements Appender {
         private String host = "localhost";
 
         @PluginBuilderAttribute
-        private String username = null;
+        private String username = "default";
 
         @PluginBuilderAttribute
         private String password = null;
@@ -365,6 +386,9 @@ public class RedisAppender implements Appender {
 
         @PluginElement("RedisThrottlerConfig")
         private RedisThrottlerConfig throttlerConfig = RedisThrottlerConfig.newBuilder().build();
+
+        @PluginBuilderAttribute
+        private String command = RPUSH_COMMAND;
 
         private Builder() {
             // Do nothing.
@@ -537,6 +561,7 @@ public class RedisAppender implements Appender {
             requireArgument(socketTimeoutSeconds > 0, "expecting: socketTimeoutSeconds > 0, found: %d", socketTimeoutSeconds);
             requireNonNull(poolConfig, "poolConfig");
             requireNonNull(throttlerConfig, "throttlerConfig");
+            requireArgument(ALLOWED_COMMANDS.contains(command), "expecting: anyOf %s, found: %s", ALLOWED_COMMANDS, command);
         }
 
         @Override
@@ -546,6 +571,8 @@ public class RedisAppender implements Appender {
                     ", layout='" + layout + '\'' +
                     ", database=" + database +
                     ", key='" + key + '\'' +
+                    ", command='" + command + '\'' +
+                    ", username='" + username + '\'' +
                     ", host='" + host + '\'' +
                     ", port=" + port +
                     ", connectionTimeoutSeconds=" + connectionTimeoutSeconds +
