@@ -42,7 +42,6 @@ import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -59,10 +58,11 @@ public class RedisAppender implements Appender {
 
     private static final StatusLogger LOGGER = StatusLogger.getLogger();
 
-    public static final String RPUSH_COMMAND = "rpush";
-    public static final String PUBLISH_COMMAND = "publish";
+    private static final String RPUSH_COMMAND = "rpush";
 
-    private static final List<String> ALLOWED_COMMANDS = Arrays.asList(RPUSH_COMMAND, PUBLISH_COMMAND);
+    private static final String PUBLISH_COMMAND = "publish";
+
+    private static final Set<String> ALLOWED_COMMANDS = Stream.of(RPUSH_COMMAND, PUBLISH_COMMAND).collect(Collectors.toSet());
 
     private final Configuration config;
 
@@ -172,10 +172,13 @@ public class RedisAppender implements Appender {
     }
 
     private void sendEvent(final Jedis jedis, final byte[] event) {
-        if (PUBLISH_COMMAND.equals(command) ) {
+        if (RPUSH_COMMAND.equals(command)) {
+            jedis.rpush(keyBytes, event);
+        } else if (PUBLISH_COMMAND.equals(command)) {
             jedis.publish(keyBytes, event);
         } else {
-            jedis.rpush(keyBytes, event);
+            String message = String.format("unknown command: `%s`", command);
+            throw new IllegalArgumentException(message);
         }
     }
 
@@ -558,7 +561,7 @@ public class RedisAppender implements Appender {
             requireArgument(socketTimeoutSeconds > 0, "expecting: socketTimeoutSeconds > 0, found: %d", socketTimeoutSeconds);
             requireNonNull(poolConfig, "poolConfig");
             requireNonNull(throttlerConfig, "throttlerConfig");
-            requireArgument(ALLOWED_COMMANDS.contains(command), "expecting: anyOf (%s), found: %s", ALLOWED_COMMANDS, command);
+            requireArgument(ALLOWED_COMMANDS.contains(command), "expecting: anyOf %s, found: %s", ALLOWED_COMMANDS, command);
         }
 
         @Override
@@ -568,6 +571,8 @@ public class RedisAppender implements Appender {
                     ", layout='" + layout + '\'' +
                     ", database=" + database +
                     ", key='" + key + '\'' +
+                    ", command='" + command + '\'' +
+                    ", username='" + username + '\'' +
                     ", host='" + host + '\'' +
                     ", port=" + port +
                     ", connectionTimeoutSeconds=" + connectionTimeoutSeconds +
