@@ -25,8 +25,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.time.Duration;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static com.vlkan.log4j2.redis.appender.RedisTestConstants.RANDOM;
 
@@ -37,7 +35,6 @@ class RedisAppenderPubSubTest {
     private static final String CLASS_NAME = RedisAppenderPubSubTest.class.getSimpleName();
 
     private static final String LOGGER_PREFIX = "[" + CLASS_NAME + "]";
-    private final ExecutorService executor = Executors.newFixedThreadPool(2);
 
     private final String redisHost = NetworkUtils.localHostName();
 
@@ -60,6 +57,10 @@ class RedisAppenderPubSubTest {
     final RedisClientExtension redisClientExtension = new RedisClientExtension(redisHost, redisPort, redisUsername, redisPassword);
 
     @Order(3)
+    @RegisterExtension
+    final RedisSubscriberExtension redisSubscriberExtension = new RedisSubscriberExtension(redisClientExtension.getClient(), redisKey);
+
+    @Order(4)
     @RegisterExtension
     final LoggerContextExtension loggerContextExtension =
         new LoggerContextExtension(
@@ -101,8 +102,6 @@ class RedisAppenderPubSubTest {
         int maxMessageCount = 100;
         int expectedMessageCount = minMessageCount + RANDOM.nextInt(maxMessageCount - minMessageCount);
 
-        JedisTestSubscriber pubsub = new JedisTestSubscriber();
-        executor.execute(() -> redisClientExtension.getClient().subscribe(pubsub, redisKey));
         LOGGER.debug("{} logging {} messages", LOGGER_PREFIX, expectedMessageCount);
         RedisTestMessage[] expectedLogMessages = RedisTestMessage.createRandomArray(expectedMessageCount);
         for (RedisTestMessage expectedLogMessage : expectedLogMessages) {
@@ -110,8 +109,7 @@ class RedisAppenderPubSubTest {
         }
 
         // Verify the logging.
-        verifyLogging(expectedLogMessages, expectedMessageCount, expectedMessageCount, pubsub);
-        executor.shutdown();
+        verifyLogging(expectedLogMessages, expectedMessageCount, expectedMessageCount);
     }
 
     @Test
@@ -123,29 +121,26 @@ class RedisAppenderPubSubTest {
                 .getLoggerContext()
                 .getLogger(RedisAppenderPubSubTest.class);
 
-        final JedisTestSubscriber pubsub = new JedisTestSubscriber();
-        executor.execute(() -> redisClientExtension.getClient().subscribe(pubsub, redisKey));
-
         // Log the 1st message.
         RedisTestMessage[] expectedLogMessages1 = RedisTestMessage.createRandomArray(1);
         logger.log(expectedLogMessages1[0].level, expectedLogMessages1[0].message);
 
         // Verify the 1st message persistence.
-        verifyLogging(expectedLogMessages1, 1, 1, pubsub);
+        verifyLogging(expectedLogMessages1, 1, 1);
 
         // Log the 2nd message.
         RedisTestMessage[] expectedLogMessages2 = RedisTestMessage.createRandomArray(1);
         logger.log(expectedLogMessages2[0].level, expectedLogMessages2[0].message);
 
         // Verify the 2nd message persistence.
-        verifyLogging(expectedLogMessages2, 2, 2, pubsub);
-        executor.shutdown();
+        verifyLogging(expectedLogMessages2, 2, 2);
+
     }
 
     private void verifyLogging(
         RedisTestMessage[] expectedLogMessages,
         int expectedTotalEventCount,
-        int expectedRedisPushSuccessCount, final JedisTestSubscriber pubsub) {
+        int expectedRedisPushSuccessCount) {
 
         // Verify the amount of persisted messages.
         LOGGER.debug("{} waiting for the logged messages to be persisted", LOGGER_PREFIX);
@@ -154,7 +149,7 @@ class RedisAppenderPubSubTest {
             .pollDelay(Duration.ofMillis(100))
             .atMost(Duration.ofSeconds(10))
             .until(() -> {
-                long persistedMessageCount = pubsub.messageCount();
+                long persistedMessageCount = redisSubscriberExtension.messageCount();
                 Assertions.assertThat(persistedMessageCount).isLessThanOrEqualTo(expectedTotalEventCount);
                 return persistedMessageCount == expectedTotalEventCount;
             });
@@ -167,7 +162,7 @@ class RedisAppenderPubSubTest {
                 "%s %s",
                 expectedLogMessage.level,
                 expectedLogMessage.message);
-            String actualSerializedMessage = pubsub.nextMessage();
+            String actualSerializedMessage = redisSubscriberExtension.nextMessage();
             try {
                 Assertions.assertThat(actualSerializedMessage).isEqualTo(expectedSerializedMessage);
             } catch (AssertionError error) {
@@ -193,4 +188,5 @@ class RedisAppenderPubSubTest {
         Assertions.assertThat(jmxBean.getRedisPushSuccessCount()).isEqualTo(expectedRedisPushSuccessCount);
         Assertions.assertThat(jmxBean.getRedisPushFailureCount()).isEqualTo(0);
     }
+
 }
