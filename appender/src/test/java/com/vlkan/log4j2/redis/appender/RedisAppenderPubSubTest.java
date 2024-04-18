@@ -63,30 +63,30 @@ class RedisAppenderPubSubTest {
     @Order(4)
     @RegisterExtension
     final LoggerContextExtension loggerContextExtension =
-        new LoggerContextExtension(
-            CLASS_NAME,
-            redisAppenderName,
-            configBuilder -> configBuilder.add(configBuilder
-                .newAppender(redisAppenderName, "RedisAppender")
-                .addAttribute("host", redisHost)
-                .addAttribute("port", redisPort)
-                .addAttribute("username", redisUsername)
-                .addAttribute("password", redisPassword)
-                .addAttribute("key", redisKey)
-                .addAttribute("ignoreExceptions", false)
-                .addAttribute("command", "publish")
-                .add(configBuilder
-                    .newLayout("PatternLayout")
-                    .addAttribute("pattern", "%level %m"))
-                .addComponent(configBuilder
-                    .newComponent("RedisThrottlerConfig")
-                    // Batch size needs to be greater than 1, so that we can observe a partially filled batch push.
-                    .addAttribute("batchSize", 10)
-                    .addAttribute("bufferSize", 100)
-                    .addAttribute("flushPeriodMillis", 500L)
-                    .addAttribute("maxEventCountPerSecond", 35)
-                    .addAttribute("maxErrorCountPerSecond", 0)
-                    .addAttribute("maxByteCountPerSecond", 4194304))));
+            new LoggerContextExtension(
+                    CLASS_NAME,
+                    redisAppenderName,
+                    configBuilder -> configBuilder.add(configBuilder
+                            .newAppender(redisAppenderName, "RedisAppender")
+                            .addAttribute("host", redisHost)
+                            .addAttribute("port", redisPort)
+                            .addAttribute("username", redisUsername)
+                            .addAttribute("password", redisPassword)
+                            .addAttribute("key", redisKey)
+                            .addAttribute("ignoreExceptions", false)
+                            .addAttribute("command", "publish")
+                            .add(configBuilder
+                                    .newLayout("PatternLayout")
+                                    .addAttribute("pattern", "%level %m"))
+                            .addComponent(configBuilder
+                                    .newComponent("RedisThrottlerConfig")
+                                    // Batch size needs to be greater than 1, so that we can observe a partially filled batch push.
+                                    .addAttribute("batchSize", 10)
+                                    .addAttribute("bufferSize", 100)
+                                    .addAttribute("flushPeriodMillis", 500L)
+                                    .addAttribute("maxEventCountPerSecond", 35)
+                                    .addAttribute("maxErrorCountPerSecond", 0)
+                                    .addAttribute("maxByteCountPerSecond", 4194304))));
 
     @Test
     void appended_messages_should_be_persisted() {
@@ -94,8 +94,8 @@ class RedisAppenderPubSubTest {
         // Create the logger.
         LOGGER.debug("creating the logger");
         Logger logger = loggerContextExtension
-            .getLoggerContext()
-            .getLogger(RedisAppenderPubSubTest.class.getCanonicalName());
+                .getLoggerContext()
+                .getLogger(RedisAppenderPubSubTest.class.getCanonicalName());
 
         // Create and log the messages.
         int minMessageCount = 1;
@@ -138,46 +138,46 @@ class RedisAppenderPubSubTest {
     }
 
     private void verifyLogging(
-        RedisTestMessage[] expectedLogMessages,
-        int expectedTotalEventCount,
-        int expectedRedisPushSuccessCount) {
+            RedisTestMessage[] expectedLogMessages,
+            int expectedTotalEventCount,
+            int expectedRedisPushSuccessCount) {
 
         // Verify the amount of persisted messages.
         LOGGER.debug("{} waiting for the logged messages to be persisted", LOGGER_PREFIX);
         Awaitility
-            .await()
-            .pollDelay(Duration.ofMillis(100))
-            .atMost(Duration.ofSeconds(10))
-            .until(() -> {
-                long persistedMessageCount = redisSubscriberExtension.messageCount();
-                Assertions.assertThat(persistedMessageCount).isLessThanOrEqualTo(expectedTotalEventCount);
-                return persistedMessageCount == expectedTotalEventCount;
-            });
+                .await()
+                .pollDelay(Duration.ofMillis(100))
+                .atMost(Duration.ofSeconds(10))
+                .until(() -> {
+                    long persistedMessageCount = redisSubscriberExtension.messageCount();
+                    Assertions.assertThat(persistedMessageCount).isLessThanOrEqualTo(expectedTotalEventCount);
+                    return persistedMessageCount == expectedTotalEventCount;
+                });
 
         // Verify the content of persisted messages.
         LOGGER.debug("{} verifying the content of persisted messages", LOGGER_PREFIX);
         for (int messageIndex = 0; messageIndex < expectedLogMessages.length; messageIndex++) {
             RedisTestMessage expectedLogMessage = expectedLogMessages[messageIndex];
             String expectedSerializedMessage = String.format(
-                "%s %s",
-                expectedLogMessage.level,
-                expectedLogMessage.message);
+                    "%s %s",
+                    expectedLogMessage.level,
+                    expectedLogMessage.message);
             String actualSerializedMessage = redisSubscriberExtension.nextMessage();
             try {
                 Assertions.assertThat(actualSerializedMessage).isEqualTo(expectedSerializedMessage);
             } catch (AssertionError error) {
                 String message = String.format(
-                    "comparison failure (messageIndex=%d, messageCount=%d)",
-                    messageIndex,
-                    expectedTotalEventCount);
+                        "comparison failure (messageIndex=%d, messageCount=%d)",
+                        messageIndex,
+                        expectedTotalEventCount);
                 throw new AssertionError(message, error);
             }
         }
 
         // Verify the throttler counters.
         Appender appender = loggerContextExtension
-            .getConfig()
-            .getAppender(redisAppenderName);
+                .getConfig()
+                .getAppender(redisAppenderName);
         Assertions.assertThat(appender).isInstanceOf(RedisAppender.class);
         RedisThrottlerJmxBean jmxBean = ((RedisAppender) appender).getJmxBean();
         Assertions.assertThat(jmxBean.getTotalEventCount()).isEqualTo(expectedTotalEventCount);
