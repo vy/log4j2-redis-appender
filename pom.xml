@@ -94,7 +94,7 @@
         <junit5.version>5.10.3</junit5.version>
         <log4j2.version>2.23.1</log4j2.version>
         <resilience4j.version>1.7.1</resilience4j.version>
-        <slf4j.version>2.0.13</slf4j.version>
+        <slf4j.version>2.0.15</slf4j.version>
 
         <!-- plugin versions -->
         <flatten-maven-plugin.version>1.6.0</flatten-maven-plugin.version>
